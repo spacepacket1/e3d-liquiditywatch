@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About the Stress Score — LiquidityWatch</title>
+<meta name="description" content="How the LiquidityWatch U.S. Financial Stress Score works.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<style>
+  :root {
+    --bg: #060b16;
+    --panel: #0d1930;
+    --panel-border: #1c2c4a;
+    --gold: #e8b84b;
+    --cyan: #4dd6e8;
+    --text: #e9edf5;
+    --text-dim: #93a2c0;
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  a { color: var(--cyan); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 60px; }
+  .back { font-size: 13px; color: var(--text-dim); text-decoration: none; display: inline-block; margin-bottom: 24px; }
+  .back:hover { color: var(--cyan); }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .subhead { color: var(--text-dim); margin-bottom: 32px; font-size: 14px; }
+  h2 { font-size: 17px; color: var(--gold); margin: 32px 0 10px; }
+  p { color: var(--text); font-size: 15px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; font-size: 15px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .disclaimer {
+    margin-top: 40px;
+    padding: 16px 18px;
+    border: 1px solid rgba(224, 87, 79, 0.35);
+    background: rgba(224, 87, 79, 0.08);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to LiquidityWatch</a>
+  <h1>What is the U.S. Financial Stress Score?</h1>
+  <div class="subhead">The methodology behind the number on the LiquidityWatch homepage.</div>
+
+  <p>The score answers one question: <strong>how close is the U.S. financial system to a point where policymakers are forced to act?</strong></p>
+
+  <p>That's a different question than recession probability, VIX, inflation, or Treasury yields taken in isolation. It's closer to <em>proximity &times; severity &times; probability</em> of policy-forcing financial-system stress &mdash; a judgment call that requires synthesizing Treasury-market mechanics, funding-market plumbing, and how the Fed and Treasury are actually behaving, not just what a single indicator says.</p>
+
+  <h2>How it's produced</h2>
+  <p>Each evaluation runs through three AI stages, each a different model, so no single model's judgment silently becomes the answer:</p>
+  <ul>
+    <li><strong>Research &amp; scoring</strong> &mdash; a deep-research model does live web research across Treasury, funding-market, and Fed-policy sources and proposes a score.</li>
+    <li><strong>Independent critique</strong> &mdash; a second model reviews that evidence independently, without seeing the first model's number, and derives its own. A real disagreement between the two triggers a targeted follow-up search on the specific point in dispute.</li>
+    <li><strong>Narrative synthesis</strong> &mdash; a third model writes the plain-language summary, explicitly explaining any disagreement between the first two rather than quietly averaging it away.</li>
+  </ul>
+
+  <div class="panel">
+    Every evaluation &mdash; material or not &mdash; is stored. Only evaluations judged materially different from the last published one trigger a new score, a notification, and a newsletter issue. No daily noise.
+  </div>
+
+  <h2>Scale and regime</h2>
+  <p>The score runs 0&ndash;100: 0&ndash;15 accommodative, 16&ndash;35 mild watchfulness, 36&ndash;55 real but contained tension, 56&ndash;75 persistent restrictive policy (active QT at multi-year-high yields with a genuinely undecided upcoming Fed decision already belongs here, even with no crisis signal &mdash; restrictive policy plus real two-sided uncertainty isn't calm), 76&ndash;90 policy-forcing danger zone, 91&ndash;100 market dysfunction or intervention underway. A second, related figure &mdash; how much Treasury/Fed policy has actually begun supplying liquidity &mdash; is tracked alongside it, since high stress with a rising policy response reads very differently than high stress with no response at all.</p>
+
+  <h2>Trigger metrics</h2>
+  <p>Alongside the headline score, each evaluation tracks three metrics explicitly against the last published one &mdash; not reasserted fresh every cycle: <strong>Controlled Break Risk</strong> (0&ndash;100, the odds current stress breaks into an uncontrolled crisis rather than staying policy-managed), <strong>Liquidity Response Probability</strong> (0&ndash;100, the odds the Fed/Treasury actually supplies new support soon &mdash; distinct from how much support is already underway), and <strong>Phase</strong> (1 = tightening/policy-threat, 2 = liquidity response beginning, 3 = full backstop underway). Each carries its own stated reason for holding or moving. BTC, ETH, and XRP each get a short trigger note plus a utility score reflecting how much that asset is actually functioning as settlement/bridge liquidity right now, not just price momentum.</p>
+
+  <h2>Fully automated</h2>
+  <p>This is an information product, not a trading system or an advisory service, and there is no human-approval step in the publishing path &mdash; a material evaluation publishes automatically the moment the three-stage process completes.</p>
+
+  <h2>Where the data comes from</h2>
+  <p>Live web research plus a FRED-sourced macro grounding context (Treasury yields, a broad-dollar proxy, high-yield credit spreads) supplied to the research stage on every cycle.</p>
+
+  <div class="disclaimer">
+    <strong>Not investment advice.</strong> This score and its narrative are produced by an AI research and synthesis process and are provided for informational purposes only. They are not a recommendation to buy, sell, or hold any asset.
+  </div>
+</div>
+</body>
+</html>

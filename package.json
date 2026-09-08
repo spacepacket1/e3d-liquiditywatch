@@ -1,0 +1,13 @@
+{
+  "name": "e3d-liquiditywatch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "liquiditywatch.e3d.ai - static front end for the E3D Macro Intelligence and U.S. Financial Stress Monitor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

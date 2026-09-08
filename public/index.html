@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiquidityWatch — Macro &amp; Crypto Liquidity Intelligence</title>
+<meta name="description" content="AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<style>
+  :root {
+    --bg: #060b16;
+    --panel: #0d1930;
+    --panel-border: #1c2c4a;
+    --gold: #e8b84b;
+    --cyan: #4dd6e8;
+    --text: #e9edf5;
+    --text-dim: #93a2c0;
+    --green: #34c77b;
+    --red: #e0574f;
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  a { color: var(--cyan); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  .hero-banner {
+    width: 100%;
+    max-height: 220px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .hero-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+  }
+  section { padding: 20px 0; border-bottom: 1px solid var(--panel-border); }
+  section:first-of-type { padding-top: 16px; }
+  section:last-of-type { border-bottom: none; }
+  .brand {
+    margin-top: 18px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  h1, h2 { margin: 0 0 6px; }
+  h2 { font-size: 22px; display: flex; align-items: center; gap: 8px; }
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    font-size: 13px;
+    font-style: italic;
+    font-family: Georgia, serif;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .info-icon:hover { border-color: var(--cyan); color: var(--cyan); }
+  .subhead { color: var(--text-dim); margin-bottom: 14px; font-size: 13px; }
+
+  .score-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 20px 22px 22px;
+  }
+  .gauge-section { text-align: center; }
+  .gauge-wrap { width: 100%; max-width: 320px; margin: 0 auto; }
+  .gauge-svg { width: 100%; height: auto; display: block; }
+  .gauge-tick { font-size: 11px; fill: var(--text-dim); }
+  .gauge-score-wrap { margin-top: -14px; }
+  .gauge-score-number { font-size: 76px; font-weight: 800; line-height: 1; }
+  .gauge-score-suffix { font-size: 22px; font-weight: 600; color: var(--text-dim); margin-left: 2px; }
+  .gauge-band-label { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; margin-top: 2px; }
+  .gauge-delta { font-size: 13px; margin-top: 4px; font-weight: 600; }
+  .score-meta { margin-top: 16px; }
+  .trigger-metrics-note {
+    font-size: 13px;
+    color: var(--text-dim);
+    background: rgba(77, 214, 232, 0.06);
+    border: 1px solid rgba(77, 214, 232, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 14px;
+  }
+  .regime-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(77, 214, 232, 0.12);
+    color: var(--cyan);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .phase-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(232, 184, 75, 0.12);
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    margin-left: 8px;
+  }
+  .trigger-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+  .trigger-chip {
+    background: rgba(6, 11, 22, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .trigger-chip-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); }
+  .trigger-chip-value { font-size: 20px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .trigger-chip-note { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .asset-triggers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+  .asset-chip {
+    background: rgba(6, 11, 22, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .asset-chip-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .asset-chip-name { font-weight: 700; color: var(--cyan); font-size: 13px; }
+  .asset-chip-role { font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.03em; }
+  .asset-chip-note { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .asset-chip-utility { font-size: 12px; color: var(--gold); margin-top: 6px; font-weight: 600; }
+  .drivers { list-style: none; padding: 0; margin: 14px 0 0; }
+  .drivers li {
+    padding: 6px 0;
+    border-top: 1px solid var(--panel-border);
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .drivers li:first-child { border-top: none; }
+  .next-trigger {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: rgba(232, 184, 75, 0.08);
+    border: 1px solid rgba(232, 184, 75, 0.25);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .next-trigger strong { color: var(--gold); }
+
+  .newsletter-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 22px 26px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .newsletter-panel h3, .newsletter-panel h4 {
+    color: var(--gold);
+    margin: 18px 0 8px;
+  }
+  .newsletter-panel h3:first-child, .newsletter-panel h4:first-child { margin-top: 0; }
+  .newsletter-panel p { margin: 0 0 14px; color: var(--text); }
+  .newsletter-panel ul { margin: 0 0 14px; padding-left: 20px; color: var(--text-dim); }
+  .newsletter-panel li { margin-bottom: 6px; }
+  .newsletter-panel strong { color: var(--cyan); }
+
+  .empty-state {
+    color: var(--text-dim);
+    font-size: 15px;
+    padding: 8px 0;
+  }
+
+  .disclaimer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-dim);
+    opacity: 0.8;
+  }
+
+  .signup-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .signup-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .signup-form input {
+    flex: 1;
+    min-width: 220px;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .signup-form input:focus { outline: none; border-color: var(--cyan); }
+  .signup-form button {
+    background: var(--gold);
+    color: #1a1200;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .signup-form button:hover { opacity: 0.9; }
+  .signup-form button:disabled { opacity: 0.5; cursor: default; }
+  .signup-status { margin-top: 10px; font-size: 13px; color: var(--text-dim); }
+  .signup-status.error { color: var(--red); }
+  .signup-status.ok { color: var(--green); }
+  [hidden] { display: none !important; }
+
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 24px 0 40px;
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 0 14px; }
+    .hero-banner { max-height: 140px; }
+    h2 { font-size: 19px; }
+    .score-panel { padding: 16px 14px 18px; }
+    .gauge-score-number { font-size: 56px; }
+    .gauge-score-suffix { font-size: 17px; }
+    .trigger-metrics, .asset-triggers { grid-template-columns: 1fr; }
+    .newsletter-panel { padding: 16px 16px; font-size: 14px; }
+    .signup-panel { padding: 18px 16px; }
+    .signup-form { flex-direction: column; }
+    .signup-form input, .signup-form button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero-banner">
+  <img src="/liquiditywatch3.jpg" alt="LiquidityWatch — Macro + Crypto Liquidity Intelligence">
+</div>
+
+<div class="wrap">
+
+  <div class="brand">LiquidityWatch</div>
+
+  <section id="stress-score">
+    <h2>U.S. Financial Stress Score <a class="info-icon" href="/about.html" aria-label="What does this score mean?">i</a></h2>
+    <div class="subhead">How close the U.S. financial system is to a point where policymakers are forced to act.</div>
+    <div class="score-panel" id="score-panel">
+      <div class="empty-state">Loading&hellip;</div>
+    </div>
+    <div class="disclaimer">Not investment advice. This score reflects an AI-driven research and synthesis process; it is provided for informational purposes only.</div>
+  </section>
+
+  <section id="newsletter-body" hidden>
+    <h2>Latest Briefing</h2>
+    <div class="newsletter-panel" id="newsletter-panel"></div>
+  </section>
+
+  <section id="mailing-list">
+    <h2>Join the Mailing List</h2>
+    <div class="subhead">Get notified only when something material changes. No daily noise.</div>
+    <div class="signup-panel">
+      <form class="signup-form" id="signup-form">
+        <input type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
+        <button type="submit" id="signup-submit">Subscribe</button>
+      </form>
+      <form class="signup-form" id="verify-form" hidden>
+        <input type="text" id="verify-code" placeholder="6-digit code from your email" required inputmode="numeric" autocomplete="one-time-code">
+        <button type="submit" id="verify-submit">Verify</button>
+      </form>
+      <div class="signup-status" id="signup-status"></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>liquiditywatch.e3d.ai &mdash; a FutCo intelligence product, powered by E3D.</footer>
+
+<script>
+const API_BASE = 'https://e3d.ai';
+
+function escapeHtml(text) {
+  return String(text == null ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Matches the bands described on /about.html (0-15 accommodative through
+// 91-100 dysfunction/intervention) - kept as one source of truth here since
+// the gauge needs concrete colors, not just band boundaries.
+const GAUGE_BANDS = [
+  { min: 0,  max: 15,  color: '#2ecc71', label: 'Accommodative' },
+  { min: 15, max: 35,  color: '#a3d977', label: 'Mild Watchfulness' },
+  { min: 35, max: 55,  color: '#e8b84b', label: 'Contained Tension' },
+  { min: 55, max: 75,  color: '#f0954a', label: 'Restrictive Policy' },
+  { min: 75, max: 90,  color: '#e8743a', label: 'Policy-Forcing Danger Zone' },
+  { min: 90, max: 100, color: '#e0574f', label: 'Market Dysfunction' },
+];
+
+function gaugeBand(score) {
+  return GAUGE_BANDS.find((b) => score >= b.min && score <= b.max) || GAUGE_BANDS[GAUGE_BANDS.length - 1];
+}
+
+function gaugeBandColor(score) {
+  return gaugeBand(score).color;
+}
+
+function gaugeAngleForValue(v) {
+  // 180deg (left, v=0) -> 0deg (right, v=100); standard math angle, y-up.
+  return 180 - (v / 100) * 180;
+}
+
+function gaugePolarPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+}
+
+function gaugeArcPath(cx, cy, r, v1, v2) {
+  const p1 = gaugePolarPoint(cx, cy, r, gaugeAngleForValue(v1));
+  const p2 = gaugePolarPoint(cx, cy, r, gaugeAngleForValue(v2));
+  return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+}
+
+function buildGaugeSvg(score) {
+  const cx = 160;
+  const cy = 155;
+  const r = 118;
+  const strokeW = 22;
+  const clamped = Math.max(0, Math.min(100, typeof score === 'number' ? score : 0));
+  const needleLen = r - strokeW / 2 - 6;
+  const needleTip = gaugePolarPoint(cx, cy, needleLen, gaugeAngleForValue(clamped));
+  const pivotR = 9;
+
+  const bands = GAUGE_BANDS.map((b) => `<path d="${gaugeArcPath(cx, cy, r, b.min, b.max)}" stroke="${b.color}" stroke-width="${strokeW}" fill="none"/>`).join('');
+  const ticks = [0, 25, 50, 75, 100].map((v) => {
+    const p = gaugePolarPoint(cx, cy, r + strokeW / 2 + 14, gaugeAngleForValue(v));
+    return `<text class="gauge-tick" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${v}</text>`;
+  }).join('');
+
+  return `
+    <svg class="gauge-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+      ${bands}
+      ${ticks}
+      <line x1="${cx}" y1="${cy}" x2="${needleTip.x.toFixed(2)}" y2="${needleTip.y.toFixed(2)}" stroke="#e9edf5" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="${pivotR}" fill="#e9edf5"/>
+      <circle cx="${cx}" cy="${cy}" r="${pivotR - 3}" fill="${gaugeBandColor(clamped)}"/>
+    </svg>
+  `;
+}
+
+function gaugeDeltaHtml(after, before) {
+  if (typeof after !== 'number' || typeof before !== 'number') return '';
+  const diff = Math.round(after) - Math.round(before);
+  if (diff === 0) return `<div class="gauge-delta" style="color:var(--text-dim)">No change vs last reading</div>`;
+  const color = diff > 0 ? 'var(--red)' : 'var(--green)';
+  const symbol = diff > 0 ? '↑' : '↓';
+  return `<div class="gauge-delta" style="color:${color}">${symbol} ${diff > 0 ? '+' : ''}${diff} vs last reading (${Math.round(before)})</div>`;
+}
+
+const PHASE_LABELS = {
+  1: 'Tightening / policy-threat phase',
+  2: 'Liquidity response beginning',
+  3: 'Full backstop underway',
+};
+
+function phaseBadgeHtml(phase) {
+  if (!phase || typeof phase.value !== 'number') return '';
+  const desc = PHASE_LABELS[phase.value] || '';
+  return `<div class="phase-badge" title="${escapeHtml(desc)}">Phase ${phase.value} of 3</div>`;
+}
+
+function metricDeltaHtml(metric) {
+  if (!metric || typeof metric.value !== 'number') return '';
+  const hasPrevious = typeof metric.previous_value === 'number';
+  const delta = hasPrevious ? metric.value - metric.previous_value : 0;
+  const arrow = !hasPrevious ? '' : delta > 0 ? ' ↑' : delta < 0 ? ' ↓' : '';
+  const from = hasPrevious ? `, was ${Math.round(metric.previous_value)}` : '';
+  return `<div class="trigger-chip"><div class="trigger-chip-label">${escapeHtml(metric.label)}</div><div class="trigger-chip-value">${Math.round(metric.value)}/100${arrow}</div><div class="trigger-chip-note">${metric.change_reason ? escapeHtml(metric.change_reason) : ''}${from}</div></div>`;
+}
+
+function triggerMetricsHtml(event) {
+  const chips = [
+    event.controlled_break_risk ? metricDeltaHtml({ ...event.controlled_break_risk, label: 'Controlled Break Risk' }) : '',
+    event.liquidity_response_probability ? metricDeltaHtml({ ...event.liquidity_response_probability, label: 'Liquidity Response Probability' }) : '',
+  ].filter(Boolean);
+  return chips.length ? `<div class="trigger-metrics">${chips.join('')}</div>` : '';
+}
+
+function assetScoreLabel(asset) {
+  return String(asset || '').toUpperCase() === 'XRP' ? 'Utility' : 'Market Confirmation';
+}
+
+function assetTriggersHtml(assetTriggers) {
+  const list = Array.isArray(assetTriggers) ? assetTriggers : [];
+  if (!list.length) return '';
+  return `<div class="asset-triggers">${list.map((a) => `
+    <div class="asset-chip">
+      <div class="asset-chip-top"><span class="asset-chip-name">${escapeHtml(a.asset || '')}</span><span class="asset-chip-role">${escapeHtml(a.role || '')}</span></div>
+      <div class="asset-chip-note">${escapeHtml(a.note || '')}</div>
+      <div class="asset-chip-utility">${escapeHtml(assetScoreLabel(a.asset))} ${Math.round(Number(a.utility_score) || 0)}/100</div>
+    </div>
+  `).join('')}</div>`;
+}
+
+async function loadStressScore() {
+  const panel = document.getElementById('score-panel');
+  try {
+    const res = await fetch(`${API_BASE}/api/financial-stress-monitor`, { cache: 'no-store' });
+    const data = await res.json();
+    const event = data && data.event;
+    if (!event) {
+      panel.innerHTML = '<div class="empty-state">No stress evaluation has been published yet. The monitoring pipeline runs on a schedule &mdash; check back soon.</div>';
+      return;
+    }
+    const score = typeof event.final_score === 'number' ? Math.round(event.final_score) : null;
+    const scoreColor = score == null ? 'var(--text-dim)' : gaugeBandColor(score);
+    const bandLabel = score == null ? '' : gaugeBand(score).label;
+    const drivers = Array.isArray(event.drivers) ? event.drivers.slice(0, 5) : [];
+    const nextTrigger = Array.isArray(event.next_triggers) && event.next_triggers.length ? event.next_triggers[0] : '';
+    const hasTriggerMetrics = event.controlled_break_risk || event.liquidity_response_probability;
+    panel.innerHTML = `
+      <div class="gauge-section">
+        <div class="gauge-wrap">${buildGaugeSvg(score)}</div>
+        <div class="gauge-score-wrap">
+          <span class="gauge-score-number" style="color:${scoreColor}">${score == null ? '—' : score}</span><span class="gauge-score-suffix">/100</span>
+          ${bandLabel ? `<div class="gauge-band-label" style="color:${scoreColor}">${escapeHtml(bandLabel)}</div>` : ''}
+          ${gaugeDeltaHtml(event.final_score, event.final_score_before)}
+        </div>
+        <div class="regime-badge">${event.final_regime ? escapeHtml(String(event.final_regime).replace(/[_-]/g, ' ')) : 'Unknown regime'}</div>
+        ${phaseBadgeHtml(event.phase)}
+      </div>
+      <div class="score-meta">
+        <div>${event.dashboard_summary ? escapeHtml(event.dashboard_summary) : ''}</div>
+        ${drivers.length ? `<ul class="drivers">${drivers.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>` : ''}
+        ${hasTriggerMetrics ? '<div class="trigger-metrics-note">The score measures pressure. Controlled Break Risk measures odds of dysfunction. Liquidity Response Probability measures odds of policy intervention &mdash; these can move independently.</div>' : ''}
+        ${triggerMetricsHtml(event)}
+        ${assetTriggersHtml(event.asset_triggers)}
+        ${nextTrigger ? `<div class="next-trigger"><strong>What would move the score next:</strong> ${escapeHtml(nextTrigger)}</div>` : ''}
+      </div>
+    `;
+    if (event.newsletter_body_html) {
+      document.getElementById('newsletter-panel').innerHTML = event.newsletter_body_html;
+      document.getElementById('newsletter-body').hidden = false;
+    }
+  } catch (err) {
+    panel.innerHTML = '<div class="empty-state">Unable to load the current score right now.</div>';
+  }
+}
+
+function setStatus(message, kind) {
+  const el = document.getElementById('signup-status');
+  el.textContent = message;
+  el.className = 'signup-status' + (kind ? ' ' + kind : '');
+}
+
+let pendingEmail = '';
+
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('signup-email');
+  const submitBtn = document.getElementById('signup-submit');
+  const email = emailInput.value.trim();
+  if (!email) return;
+  submitBtn.disabled = true;
+  setStatus('Submitting…', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, list: 'financial_stress_alerts' }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setStatus(data.message || 'Something went wrong. Please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+    pendingEmail = email;
+    if (data.needsVerification) {
+      setStatus('Check your email for a verification code.', 'ok');
+      document.getElementById('verify-form').hidden = false;
+      emailInput.disabled = true;
+    } else {
+      setStatus('You’re subscribed.', 'ok');
+      submitBtn.textContent = 'Subscribed';
+    }
+  } catch (err) {
+    setStatus('Something went wrong. Please try again.', 'error');
+    submitBtn.disabled = false;
+  }
+});
+
+document.getElementById('verify-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const codeInput = document.getElementById('verify-code');
+  const submitBtn = document.getElementById('verify-submit');
+  const code = codeInput.value.trim();
+  if (!code || !pendingEmail) return;
+  submitBtn.disabled = true;
+  setStatus('Verifying…', '');
+  try {
+    const res = await fetch(`${API_BASE}/verifyEmailCode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: pendingEmail, code }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setStatus(data.message || 'Invalid or expired code.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+    setStatus('You’re subscribed and verified.', 'ok');
+    document.getElementById('verify-form').hidden = true;
+  } catch (err) {
+    setStatus('Something went wrong. Please try again.', 'error');
+    submitBtn.disabled = false;
+  }
+});
+
+loadStressScore();
+</script>
+
+</body>
+</html>
