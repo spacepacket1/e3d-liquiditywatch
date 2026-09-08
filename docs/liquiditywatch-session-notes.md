@@ -166,8 +166,25 @@ endpoint), the resilience contract, versioning policy, and the 0–100→0–1 m
   and the fact that the scoring pipeline's home repo is undocumented (flagged as a gap —
   "likely inside `spacepacket`, unconfirmed").
 
+## Checked in + debate queued (end of session 2)
+
+- All `docs/` + `CLAUDE.md` committed and **pushed** to `e3d-liquiditywatch` main
+  (`e59ce48`). `futco-mcp` KB entry pushed (`e582e5d`). `e3d-pilot` pulled to latest
+  (`3bb183e`) — `bin/e3d-debate` now present locally.
+- `docs/debates/2026-09-08-vision-strategy/` committed + pushed (`9881fae`):
+  `QUESTION.md` (self-contained 3-question brief) + `PROMPT.md` (run instructions).
+  **Next physical action is Chris's:** run `PROMPT.md` in a Claude session on the mac
+  mini `10.0.0.42` where `e3d-debate` is set up. That session runs the debate, writes
+  `RESULT.md` + `run/transcript.md` into this dir, commits unpushed.
+- `e3d-debate` = `e3d-pilot/bin/e3d-debate`, a standalone prototype (not wired into
+  `bin/e3d-pilot`): N rounds across `lib/providers/*` adapters + convergence detection
+  + a synthesizer pass. Runs here with `claude` + `codex` adapters (both CLIs present);
+  `grok-build`/`devin` adapters exist but those CLIs are not installed on this box.
+
 ## Still open
 
+0. **Chris runs the vision-strategy debate** on the mac mini (see above), then we fold
+   `RESULT.md` back into `VISION.md` / `MODEL.md` §8.
 1. **Chris review** of MODEL.md §6.2–6.3 (the seed node/edge list — polarity signs
    especially) and the open-items list (§8), esp. #4 (0–100 vs 0–1) and #5 (outcome loop).
 2. **Pin down the scoring-pipeline repo.** Nothing in-repo or in `futco-mcp` says what
