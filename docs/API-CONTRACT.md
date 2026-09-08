@@ -4,6 +4,14 @@
 stack) and this front end. Model semantics are in [`MODEL.md`](./MODEL.md); this document
 is *transport only*.
 
+**Pipeline producer, pinned down 2026-09-08:** `spacepacket` (repo `spacepacket1/e3d`),
+`server/financialStress/` — a three-LLM-stage pipeline (`providers/openaiDeepResearch.js`
+→ `providers/grokCritic.js` → `providers/claudeNarrative.js`), orchestrated by
+`worker.js`/`lifecycle.js`, persisted to ClickHouse via `repository.js`, mounted from
+`server/spacepacket.js`. See the `spacepacket` entry in the `futco-mcp` knowledge base for
+detail. This is informational only — per the rule below, nothing in this repo may depend
+on that code; this contract stays the only joint.
+
 Per the E3D integration law (`e3d-maps/docs/E3D_ECOSYSTEM_ARCHITECTURE.md`): stages are
 joined "not by shared code but by shared contracts." This file **is** that joint for
 LiquidityWatch. Change it deliberately and version it.

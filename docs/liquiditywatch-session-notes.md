@@ -187,9 +187,14 @@ endpoint), the resilience contract, versioning policy, and the 0–100→0–1 m
    `RESULT.md` back into `VISION.md` / `MODEL.md` §8.
 1. **Chris review** of MODEL.md §6.2–6.3 (the seed node/edge list — polarity signs
    especially) and the open-items list (§8), esp. #4 (0–100 vs 0–1) and #5 (outcome loop).
-2. **Pin down the scoring-pipeline repo.** Nothing in-repo or in `futco-mcp` says what
-   produces `/api/financial-stress-monitor`. Needed before any pipeline-side contract
-   work.
+2. ~~**Pin down the scoring-pipeline repo.**~~ **Resolved 2026-09-08.** It's
+   `spacepacket`'s `server/financialStress/` module — three-stage pipeline
+   (`providers/openaiDeepResearch.js` → `providers/grokCritic.js` →
+   `providers/claudeNarrative.js`), `worker.js`/`lifecycle.js` orchestration,
+   `repository.js` → ClickHouse persistence, mounted from `server/spacepacket.js`.
+   `mailing-list/signup` / `verifyEmailCode` are separate, generic `spacepacket` routes,
+   not part of this module. Recorded in `API-CONTRACT.md` and the `futco-mcp` KB entries
+   for `e3d-liquiditywatch` and `spacepacket`.
 3. **Live crypto data** for BTC/ETH/XRP sections via `e3d-ai` MCP (`get_token_info`,
    `get_token_counterparties`, `search_stories`) — for populating the model, not designing
    it. Not started.
