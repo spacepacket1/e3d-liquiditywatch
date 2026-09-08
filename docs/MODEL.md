@@ -396,9 +396,24 @@ asserted without a trail. Today's front end collapses this into `dashboard_summa
    - **v1 (instrumentation only):** every published call gets an immutable call ID,
      timestamp, an archived snapshot of the full payload (score, phase, Controlled Break
      Risk, Liquidity Response Probability), model/prompt/version provenance, and a
-     **falsifiable-claim spec** — expected response type, responsible authority,
-     qualifying action, observation window. This is recording, not a loop, but it's what
-     makes the fast-follow possible without a redesign.
+     **falsifiable-claim spec**. This is recording, not a loop, but it's what makes the
+     fast-follow possible without a redesign — a claim that isn't checkable against a
+     specific, bounded outcome can't be scored later no matter how much data
+     accumulates. Four fields, one per call:
+     - `response_type` — the category of action that would count: `srf_expansion` ·
+       `discount_window_spike` · `swap_line_activation` · `qe_restart` ·
+       `emergency_facility` · `coordinated_messaging` · `none_expected` (a call can
+       legitimately predict no response).
+     - `responsible_authority` — `fed` · `treasury` · `both`.
+     - `qualifying_action` — one sentence, human-checkable: what specifically would
+       satisfy this claim (not "a response" — a fact someone can look up and confirm or
+       deny on the observation date).
+     - `observation_window` — a bounded period after the call (days) after which, absent
+       the qualifying action, the claim scores as "no response." Unbounded windows can't
+       be scored; this is what keeps the fast-follow's eventual sample well-defined.
+     Proposed home in `API-CONTRACT.md`: a `falsifiable_claim` object alongside each
+     archived call, same shape as above — not yet added, since the archive itself is
+     still fast-follow-gated per this item.
    - **Fast-follow (labeling / scoring / calibration):** triggered by accumulating enough
      real dated calls, explicitly **not** a calendar deadline.
    - Not the product's sole differentiator either way — the curated causal graph, blind
