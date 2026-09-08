@@ -386,10 +386,24 @@ asserted without a trail. Today's front end collapses this into `dashboard_summa
    from `_TEMPLATE.md`.
 4. **0–100 vs 0.0–1.0.** §1 proposes headline-only 0–100, everything else 0.0–1.0.
    Confirm before `API-CONTRACT.md` locks.
-5. **Outcome loop.** E3D scores every prediction against reality later
-   (`PredictionOutcome`, `SignalUtilityScore`). Decide whether LiquidityWatch tracks
-   "was the STRESS_BUILDING call followed by an actual response?" — powerful, not in the
-   current spec.
+5. **Outcome loop — resolved, fast-follow.** E3D scores every prediction against reality
+   later (`PredictionOutcome`, `SignalUtilityScore`). Resolved by debate 2026-09-08 (Q2,
+   full consensus across claude/codex/grok-build — see
+   [`debates/2026-09-08-vision-strategy/RESULT.md`](./debates/2026-09-08-vision-strategy/RESULT.md)):
+   scoring "was the STRESS_BUILDING call followed by an actual response?" is **not v1**.
+   Fed/Treasury liquidity responses are rare, so scoring before a usable sample of dated
+   calls exists would be calibration theater, not calibration.
+   - **v1 (instrumentation only):** every published call gets an immutable call ID,
+     timestamp, an archived snapshot of the full payload (score, phase, Controlled Break
+     Risk, Liquidity Response Probability), model/prompt/version provenance, and a
+     **falsifiable-claim spec** — expected response type, responsible authority,
+     qualifying action, observation window. This is recording, not a loop, but it's what
+     makes the fast-follow possible without a redesign.
+   - **Fast-follow (labeling / scoring / calibration):** triggered by accumulating enough
+     real dated calls, explicitly **not** a calendar deadline.
+   - Not the product's sole differentiator either way — the curated causal graph, blind
+     independent critique, and publish-only-on-material-change already differentiate it
+     from a plain dashboard without the loop.
 6. **Structured `next_triggers`.** E3D theses use machine-checkable
    `invalidation_predicates: [{kind, …}]`. LiquidityWatch's `next_triggers` is a string
    array today; consider structured predicates.

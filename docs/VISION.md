@@ -82,6 +82,17 @@ Every E3D surface reduces to the same shape:
 | **Applied FutCo** | People → Projects → Decisions → Knowledge → Agents |
 | **LiquidityWatch** | Macro event → Market impact → Policy response → Asset impact |
 
+**Shaped like `e3d-corp`, not built on it.** The primitive above is conceptual kinship —
+same nouns, same node/edge naming conventions — not a shared runtime. LiquidityWatch's
+model/decision layer is implemented standalone: `e3d-corp` is real but immature, and
+coupling a live public score to its schema churn would be the wrong trade for the reuse on
+offer (the concrete reusable pieces — typed edges, confidence, lifecycle status — are
+already available as schema convention via `e3d-maps`, no runtime dependency required).
+Resolved by debate 2026-09-08 (Q1); see
+[`debates/2026-09-08-vision-strategy/RESULT.md`](./debates/2026-09-08-vision-strategy/RESULT.md).
+Revisit a real `e3d-corp` instance only once `e3d-corp` stabilizes *and* LiquidityWatch has
+an actual Decision/Outcome stream to justify it.
+
 The "world model" that AI labs are racing toward is usually read as "AI understands
 physics." There is a second reading that matters more for finance, software, and
 organizations: **a world model is a model of the relationships between things** — entity,
@@ -106,23 +117,41 @@ are this thesis applied once, concretely:
 3. **Hypotheses are first-class and gated.** New nodes/edges enter as `proposed` and a
    human promotes them (`StoryHypothesis` pattern). The graph *grows*, but structure
    changes are human decisions.
-4. **The outcome loop is the point, eventually.** `MODEL.md` §8 item 5. E3D scores every
-   prediction against what actually happened (`PredictionOutcome`, `SignalUtilityScore`).
-   LiquidityWatch closing that loop — "the STRESS_BUILDING call on date X was / wasn't
-   followed by a real policy response" — is what turns it from a renderer into a
-   *learning* system. It is not in the original spec; it is the thing that makes the
-   vision real rather than decorative.
+4. **The outcome loop is the point, eventually — fast-follow, by design.** `MODEL.md` §8
+   item 5. E3D scores every prediction against what actually happened
+   (`PredictionOutcome`, `SignalUtilityScore`). LiquidityWatch closing that loop — "the
+   STRESS_BUILDING call on date X was / wasn't followed by a real policy response" — is
+   what turns it from a renderer into a *learning* system, and it is the feature that
+   earns the right to make that claim. It is deliberately **not v1**: resolved by debate
+   2026-09-08 (Q2) as a fast-follow, gated on accumulating enough real dated calls rather
+   than a calendar deadline (Fed/Treasury liquidity responses are rare — scoring before
+   there's a usable sample would be calibration theater on n≈0). v1 ships only the
+   instrumentation that makes the fast-follow possible: immutable call ID, timestamp,
+   archived payload, provenance, and a falsifiable-claim spec per call. It is also not the
+   product's *sole* differentiator — the curated graph, blind independent critique, and
+   publish-only-on-material-change already differentiate LiquidityWatch from a plain
+   dashboard without it.
 5. **Models stay interchangeable.** The three-stage pipeline already uses a different
    model per stage. Nothing in the contract or the graph names a model as load-bearing.
    The accumulated graph is the asset; the models are swappable workers.
 
 ---
 
-## The open strategic question
+## Public positioning — resolved
 
 Whether LiquidityWatch should be *positioned* publicly as "a persistent intelligence
 system that maintains a model of the financial system" rather than "an AI stress monitor."
 The first framing is the E3D thesis and is more defensible long-term; the second is easier
-to explain on a landing page. This doc does not settle that — it records that the build
-should not foreclose the first framing, and §4 above (the outcome loop) is the feature
-that earns the right to make the claim.
+to explain on a landing page, and is what `README.md` and `about.html` already use.
+
+Resolved by debate 2026-09-08 (Q3, full consensus) — see
+[`debates/2026-09-08-vision-strategy/RESULT.md`](./debates/2026-09-08-vision-strategy/RESULT.md):
+**lead publicly with the concrete framing** ("an AI-run U.S. financial-stress monitor";
+the causal graph is the product's *mechanism*, described as such, not its *category*).
+Committing to the world-model framing publicly before the outcome loop exists is a
+credibility gap, not an option-preserving choice — it also mis-sets the failure mode,
+since a quiet publish cycle would read as "the world-model failed" rather than "the
+monitor had nothing new to say." The internal claim in this document — first
+domain-specific instance of the E3D intelligence-graph architecture — stays here as
+design rationale. It graduates to public copy only once the outcome loop (§4 above) has
+produced a real track record.
