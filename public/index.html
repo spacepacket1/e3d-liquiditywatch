@@ -18,6 +18,7 @@
     --text-dim: #93a2c0;
     --green: #34c77b;
     --red: #e0574f;
+    --violet: #9b7fe8;
   }
   * { box-sizing: border-box; }
   html, body { overflow-x: hidden; }
@@ -125,6 +126,19 @@
     margin-bottom: 10px;
     margin-left: 8px;
   }
+  .classifier-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(155, 127, 232, 0.14);
+    color: var(--violet);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    margin-left: 8px;
+  }
+  .trend-note { font-size: 12px; color: var(--text-dim); font-weight: 600; }
   .trigger-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
   .trigger-chip {
     background: rgba(6, 11, 22, 0.5);
@@ -147,6 +161,8 @@
   .asset-chip-role { font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.03em; }
   .asset-chip-note { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
   .asset-chip-utility { font-size: 12px; color: var(--gold); margin-top: 6px; font-weight: 600; }
+  .asset-chip-bridge { font-size: 11px; color: var(--violet); margin-top: 4px; }
+  .asset-chip-flow { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .drivers { list-style: none; padding: 0; margin: 14px 0 0; }
   .drivers li {
     padding: 6px 0;
@@ -165,6 +181,66 @@
     color: var(--text-dim);
   }
   .next-trigger strong { color: var(--gold); }
+
+  .falsifiable-claim {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(155, 127, 232, 0.08);
+    border: 1px solid rgba(155, 127, 232, 0.25);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .falsifiable-claim-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--violet);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .falsifiable-claim-action { margin-top: 4px; color: var(--text); }
+
+  .subscore-panel, .classification-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 20px 22px 22px;
+  }
+  .subscore-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .subscore-chip {
+    background: rgba(6, 11, 22, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .subscore-label { font-size: 12px; color: var(--text-dim); }
+  .subscore-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .subscore-classification {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--gold);
+  }
+  .subscore-reason { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .classification-block { margin-top: 16px; }
+  .classification-block:first-child { margin-top: 0; }
+  .classification-heading {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .classification-facts .classification-heading { color: var(--cyan); }
+  .classification-interpretation .classification-heading { color: var(--gold); }
+  .classification-speculation .classification-heading { color: var(--red); }
+  .classification-block ul { margin: 0; padding-left: 20px; color: var(--text-dim); font-size: 14px; }
+  .classification-block li { margin-bottom: 8px; }
+  .confidence-tag { font-size: 11px; color: var(--text-dim); opacity: 0.8; }
 
   .newsletter-panel {
     background: var(--panel);
@@ -247,7 +323,8 @@
     .score-panel { padding: 16px 14px 18px; }
     .gauge-score-number { font-size: 56px; }
     .gauge-score-suffix { font-size: 17px; }
-    .trigger-metrics, .asset-triggers { grid-template-columns: 1fr; }
+    .trigger-metrics, .asset-triggers, .subscore-grid { grid-template-columns: 1fr; }
+    .subscore-panel, .classification-panel { padding: 16px 14px 18px; }
     .newsletter-panel { padding: 16px 16px; font-size: 14px; }
     .signup-panel { padding: 18px 16px; }
     .signup-form { flex-direction: column; }
@@ -272,6 +349,18 @@
       <div class="empty-state">Loading&hellip;</div>
     </div>
     <div class="disclaimer">Not investment advice. This score reflects an AI-driven research and synthesis process; it is provided for informational purposes only.</div>
+  </section>
+
+  <section id="subscore-breakdown" hidden>
+    <h2>Sub-Engine Breakdown</h2>
+    <div class="subhead">How each domain is contributing to the headline score.</div>
+    <div class="subscore-panel" id="subscore-panel"></div>
+  </section>
+
+  <section id="classification-body" hidden>
+    <h2>Facts, Interpretation &amp; Speculation</h2>
+    <div class="subhead">What's measured, what it implies, and what's explicitly flagged as lower-confidence.</div>
+    <div class="classification-panel" id="classification-panel"></div>
   </section>
 
   <section id="newsletter-body" hidden>
@@ -394,37 +483,179 @@ function phaseBadgeHtml(phase) {
   return `<div class="phase-badge" title="${escapeHtml(desc)}">Phase ${phase.value} of 3</div>`;
 }
 
-function metricDeltaHtml(metric) {
+// v1 (schema_version present) ships trigger-metric/asset-score values as
+// 0.0-1.0; a pre-v1 event (no schema_version) still has them as 0-100 -
+// see docs/API-CONTRACT.md's migration note. Every reader of a raw value
+// from `event.pipeline`-derived data must go through this so the two
+// scales are never displayed as if they were the same number.
+function scaledUnitPercent(rawValue, schemaVersion) {
+  if (typeof rawValue !== 'number') return null;
+  const unit = schemaVersion ? rawValue : rawValue / 100;
+  return Math.round(unit * 100);
+}
+
+// velocity/acceleration are already in the same unit as the value they
+// describe (see docs/API-CONTRACT.md); render them as a short trend note
+// rather than raw numbers, which are meaningless without the scale.
+function trendNoteHtml(velocity, acceleration) {
+  if (typeof velocity !== 'number' || velocity === 0) return '';
+  const dir = velocity > 0 ? 'rising' : 'falling';
+  const sameSign = typeof acceleration === 'number' && acceleration !== 0
+    && Math.sign(acceleration) === Math.sign(velocity);
+  const oppositeSign = typeof acceleration === 'number' && acceleration !== 0 && !sameSign;
+  const pace = sameSign ? ', accelerating' : oppositeSign ? ', slowing' : '';
+  return ` <span class="trend-note">(${dir}${pace})</span>`;
+}
+
+function metricDeltaHtml(metric, schemaVersion) {
   if (!metric || typeof metric.value !== 'number') return '';
+  const pct = scaledUnitPercent(metric.value, schemaVersion);
   const hasPrevious = typeof metric.previous_value === 'number';
-  const delta = hasPrevious ? metric.value - metric.previous_value : 0;
+  const prevPct = hasPrevious ? scaledUnitPercent(metric.previous_value, schemaVersion) : null;
+  const delta = hasPrevious ? pct - prevPct : 0;
   const arrow = !hasPrevious ? '' : delta > 0 ? ' ↑' : delta < 0 ? ' ↓' : '';
-  const from = hasPrevious ? `, was ${Math.round(metric.previous_value)}` : '';
-  return `<div class="trigger-chip"><div class="trigger-chip-label">${escapeHtml(metric.label)}</div><div class="trigger-chip-value">${Math.round(metric.value)}/100${arrow}</div><div class="trigger-chip-note">${metric.change_reason ? escapeHtml(metric.change_reason) : ''}${from}</div></div>`;
+  const from = hasPrevious ? `, was ${prevPct}%` : '';
+  return `<div class="trigger-chip"><div class="trigger-chip-label">${escapeHtml(metric.label)}</div><div class="trigger-chip-value">${pct}%${arrow}${trendNoteHtml(metric.velocity, metric.acceleration)}</div><div class="trigger-chip-note">${metric.change_reason ? escapeHtml(metric.change_reason) : ''}${from}</div></div>`;
 }
 
 function triggerMetricsHtml(event) {
   const chips = [
-    event.controlled_break_risk ? metricDeltaHtml({ ...event.controlled_break_risk, label: 'Controlled Break Risk' }) : '',
-    event.liquidity_response_probability ? metricDeltaHtml({ ...event.liquidity_response_probability, label: 'Liquidity Response Probability' }) : '',
+    event.controlled_break_risk ? metricDeltaHtml({ ...event.controlled_break_risk, label: 'Controlled Break Risk' }, event.schema_version) : '',
+    event.liquidity_response_probability ? metricDeltaHtml({ ...event.liquidity_response_probability, label: 'Liquidity Response Probability' }, event.schema_version) : '',
   ].filter(Boolean);
   return chips.length ? `<div class="trigger-metrics">${chips.join('')}</div>` : '';
 }
 
-function assetScoreLabel(asset) {
+const POLICY_CLASSIFIER_LABELS = {
+  normal: 'Normal',
+  stress_building: 'Stress Building',
+  controlled_stabilization: 'Controlled Stabilization',
+  systemic_backstop: 'Systemic Backstop',
+  monetary_regime_change: 'Monetary Regime Change',
+};
+
+function policyClassifierBadgeHtml(classifier) {
+  if (!classifier) return '';
+  const label = POLICY_CLASSIFIER_LABELS[classifier] || String(classifier).replace(/[_-]/g, ' ');
+  return `<div class="classifier-badge">${escapeHtml(label)}</div>`;
+}
+
+const BRIDGE_ROLE_LABELS = {
+  adjacent_asset: 'Adjacent asset',
+  optional_bridge: 'Optional bridge',
+  growing_liquidity_layer: 'Growing liquidity layer',
+  core_routing_asset: 'Core routing asset',
+};
+
+const FLOW_COMPOSITION_LABELS = {
+  stablecoin_to_stablecoin: 'Stablecoin → stablecoin (bypasses XRP)',
+  stablecoin_via_xrp: 'Stablecoin → XRP → stablecoin',
+  mixed: 'Mixed flow composition',
+};
+
+// score_kind/bridge_role are v1 fields; fall back to the pre-v1 asset-name
+// heuristic when they're absent so an older event still renders sensibly.
+function assetScoreLabel(asset, scoreKind) {
+  if (scoreKind === 'utility') return 'Utility';
+  if (scoreKind === 'market_confirmation') return 'Market Confirmation';
   return String(asset || '').toUpperCase() === 'XRP' ? 'Utility' : 'Market Confirmation';
 }
 
-function assetTriggersHtml(assetTriggers) {
+function assetTriggersHtml(assetTriggers, schemaVersion) {
   const list = Array.isArray(assetTriggers) ? assetTriggers : [];
   if (!list.length) return '';
-  return `<div class="asset-triggers">${list.map((a) => `
+  return `<div class="asset-triggers">${list.map((a) => {
+    const pct = scaledUnitPercent(Number(a.utility_score), schemaVersion) ?? 0;
+    const bridgeRole = a.bridge_role && BRIDGE_ROLE_LABELS[a.bridge_role]
+      ? `<div class="asset-chip-bridge">${escapeHtml(BRIDGE_ROLE_LABELS[a.bridge_role])}</div>` : '';
+    const flowComposition = a.flow_composition && FLOW_COMPOSITION_LABELS[a.flow_composition]
+      ? `<div class="asset-chip-flow">${escapeHtml(FLOW_COMPOSITION_LABELS[a.flow_composition])}</div>` : '';
+    return `
     <div class="asset-chip">
       <div class="asset-chip-top"><span class="asset-chip-name">${escapeHtml(a.asset || '')}</span><span class="asset-chip-role">${escapeHtml(a.role || '')}</span></div>
       <div class="asset-chip-note">${escapeHtml(a.note || '')}</div>
-      <div class="asset-chip-utility">${escapeHtml(assetScoreLabel(a.asset))} ${Math.round(Number(a.utility_score) || 0)}/100</div>
+      <div class="asset-chip-utility">${escapeHtml(assetScoreLabel(a.asset, a.score_kind))} ${pct}%</div>
+      ${bridgeRole}
+      ${flowComposition}
     </div>
-  `).join('')}</div>`;
+  `;
+  }).join('')}</div>`;
+}
+
+const FALSIFIABLE_RESPONSE_LABELS = {
+  srf_expansion: 'an SRF expansion',
+  discount_window_spike: 'a discount-window usage spike',
+  swap_line_activation: 'a swap-line activation',
+  qe_restart: 'a restart of QE',
+  emergency_facility: 'a new emergency facility',
+  coordinated_messaging: 'coordinated policymaker messaging',
+  none_expected: 'no policy response',
+};
+
+function falsifiableClaimHtml(claim) {
+  if (!claim || typeof claim !== 'object') return '';
+  const responseLabel = FALSIFIABLE_RESPONSE_LABELS[claim.response_type]
+    || String(claim.response_type || '').replace(/_/g, ' ');
+  const authority = claim.responsible_authority
+    ? escapeHtml(claim.responsible_authority).replace(/^\w/, (c) => c.toUpperCase())
+    : '';
+  const window = typeof claim.observation_window_days === 'number'
+    ? `${claim.observation_window_days}-day` : '';
+  return `<div class="falsifiable-claim">
+    <div class="falsifiable-claim-label">This call is falsifiable</div>
+    <div>Expecting ${escapeHtml(responseLabel)}${authority ? ` from ${authority}` : ''}${window ? ` within a ${window} window` : ''}.</div>
+    ${claim.qualifying_action ? `<div class="falsifiable-claim-action">${escapeHtml(claim.qualifying_action)}</div>` : ''}
+  </div>`;
+}
+
+const SUBSCORE_LABELS = {
+  treasury_stress: 'Treasury Market Stress',
+  funding_stress: 'Funding Market Stress',
+  fed_response: 'Fed / Treasury Response',
+  ai_economic_impulse: 'AI Economic Impulse',
+  energy_stress: 'Energy System Stress',
+  global_liquidity: 'Global Liquidity',
+};
+
+function subscoresHtml(subscores) {
+  if (!subscores || typeof subscores !== 'object') return '';
+  const keys = Object.keys(SUBSCORE_LABELS).filter((k) => subscores[k] && typeof subscores[k].value === 'number');
+  if (!keys.length) return '';
+  return `<div class="subscore-grid">${keys.map((k) => {
+    const s = subscores[k];
+    const pct = Math.round(s.value * 100);
+    const classification = k === 'ai_economic_impulse' && s.classification
+      ? `<div class="subscore-classification">${escapeHtml(s.classification)}</div>` : '';
+    return `<div class="subscore-chip">
+      <div class="subscore-label">${escapeHtml(SUBSCORE_LABELS[k])}</div>
+      <div class="subscore-value">${pct}%</div>
+      ${classification}
+      ${s.change_reason ? `<div class="subscore-reason">${escapeHtml(s.change_reason)}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function classificationBlocksHtml(blocks) {
+  if (!blocks || typeof blocks !== 'object') return '';
+  const facts = Array.isArray(blocks.observed_facts) ? blocks.observed_facts : [];
+  const interpretation = Array.isArray(blocks.interpretation) ? blocks.interpretation : [];
+  const speculation = Array.isArray(blocks.speculation) ? blocks.speculation : [];
+  if (!facts.length && !interpretation.length && !speculation.length) return '';
+
+  function itemsHtml(items, withConfidence) {
+    return items.map((item) => `<li>${escapeHtml(item && item.text || '')}${
+      withConfidence && typeof item.confidence === 'number'
+        ? ` <span class="confidence-tag">${Math.round(item.confidence * 100)}% confidence</span>` : ''
+    }</li>`).join('');
+  }
+
+  return [
+    facts.length ? `<div class="classification-block classification-facts"><div class="classification-heading">Observed Facts</div><ul>${itemsHtml(facts, false)}</ul></div>` : '',
+    interpretation.length ? `<div class="classification-block classification-interpretation"><div class="classification-heading">Interpretation</div><ul>${itemsHtml(interpretation, true)}</ul></div>` : '',
+    // Speculation always renders as the lowest-confidence tier regardless
+    // of its own confidence number - see docs/MODEL.md SS7.
+    speculation.length ? `<div class="classification-block classification-speculation"><div class="classification-heading">Speculation</div><ul>${itemsHtml(speculation, true)}</ul></div>` : '',
+  ].join('');
 }
 
 async function loadStressScore() {
@@ -447,22 +678,34 @@ async function loadStressScore() {
       <div class="gauge-section">
         <div class="gauge-wrap">${buildGaugeSvg(score)}</div>
         <div class="gauge-score-wrap">
-          <span class="gauge-score-number" style="color:${scoreColor}">${score == null ? '—' : score}</span><span class="gauge-score-suffix">/100</span>
+          <span class="gauge-score-number" style="color:${scoreColor}">${score == null ? '—' : score}</span><span class="gauge-score-suffix">/100</span>${trendNoteHtml(event.final_score_velocity, event.final_score_acceleration)}
           ${bandLabel ? `<div class="gauge-band-label" style="color:${scoreColor}">${escapeHtml(bandLabel)}</div>` : ''}
           ${gaugeDeltaHtml(event.final_score, event.final_score_before)}
         </div>
         <div class="regime-badge">${event.final_regime ? escapeHtml(String(event.final_regime).replace(/[_-]/g, ' ')) : 'Unknown regime'}</div>
         ${phaseBadgeHtml(event.phase)}
+        ${policyClassifierBadgeHtml(event.policy_classifier)}
       </div>
       <div class="score-meta">
         <div>${event.dashboard_summary ? escapeHtml(event.dashboard_summary) : ''}</div>
         ${drivers.length ? `<ul class="drivers">${drivers.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>` : ''}
         ${hasTriggerMetrics ? '<div class="trigger-metrics-note">The score measures pressure. Controlled Break Risk measures odds of dysfunction. Liquidity Response Probability measures odds of policy intervention &mdash; these can move independently.</div>' : ''}
         ${triggerMetricsHtml(event)}
-        ${assetTriggersHtml(event.asset_triggers)}
+        ${assetTriggersHtml(event.asset_triggers, event.schema_version)}
+        ${falsifiableClaimHtml(event.falsifiable_claim)}
         ${nextTrigger ? `<div class="next-trigger"><strong>What would move the score next:</strong> ${escapeHtml(nextTrigger)}</div>` : ''}
       </div>
     `;
+    const subscoreHtml = subscoresHtml(event.subscores);
+    if (subscoreHtml) {
+      document.getElementById('subscore-panel').innerHTML = subscoreHtml;
+      document.getElementById('subscore-breakdown').hidden = false;
+    }
+    const blocksHtml = classificationBlocksHtml(event.classification_blocks);
+    if (blocksHtml) {
+      document.getElementById('classification-panel').innerHTML = blocksHtml;
+      document.getElementById('classification-body').hidden = false;
+    }
     if (event.newsletter_body_html) {
       document.getElementById('newsletter-panel').innerHTML = event.newsletter_body_html;
       document.getElementById('newsletter-body').hidden = false;
