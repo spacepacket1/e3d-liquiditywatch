@@ -376,10 +376,6 @@
         <input type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
         <button type="submit" id="signup-submit">Subscribe</button>
       </form>
-      <form class="signup-form" id="verify-form" hidden>
-        <input type="text" id="verify-code" placeholder="6-digit code from your email" required inputmode="numeric" autocomplete="one-time-code">
-        <button type="submit" id="verify-submit">Verify</button>
-      </form>
       <div class="signup-status" id="signup-status"></div>
     </div>
   </section>
@@ -433,8 +429,6 @@ function setStatus(message, kind) {
   el.className = 'signup-status' + (kind ? ' ' + kind : '');
 }
 
-let pendingEmail = '';
-
 document.getElementById('signup-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const emailInput = document.getElementById('signup-email');
@@ -455,43 +449,9 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
       submitBtn.disabled = false;
       return;
     }
-    pendingEmail = email;
-    if (data.needsVerification) {
-      setStatus('Check your email for a verification code.', 'ok');
-      document.getElementById('verify-form').hidden = false;
-      emailInput.disabled = true;
-    } else {
-      setStatus('You’re subscribed.', 'ok');
-      submitBtn.textContent = 'Subscribed';
-    }
-  } catch (err) {
-    setStatus('Something went wrong. Please try again.', 'error');
-    submitBtn.disabled = false;
-  }
-});
-
-document.getElementById('verify-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const codeInput = document.getElementById('verify-code');
-  const submitBtn = document.getElementById('verify-submit');
-  const code = codeInput.value.trim();
-  if (!code || !pendingEmail) return;
-  submitBtn.disabled = true;
-  setStatus('Verifying…', '');
-  try {
-    const res = await fetch(`${API_BASE}/verifyEmailCode`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: pendingEmail, code }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      setStatus(data.message || 'Invalid or expired code.', 'error');
-      submitBtn.disabled = false;
-      return;
-    }
-    setStatus('You’re subscribed and verified.', 'ok');
-    document.getElementById('verify-form').hidden = true;
+    setStatus(data.message || 'Check your email to confirm your subscription.', 'ok');
+    submitBtn.textContent = 'Subscribed';
+    emailInput.disabled = true;
   } catch (err) {
     setStatus('Something went wrong. Please try again.', 'error');
     submitBtn.disabled = false;

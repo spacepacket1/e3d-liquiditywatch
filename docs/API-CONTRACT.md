@@ -23,8 +23,16 @@ LiquidityWatch. Change it deliberately and version it.
 | Method | URL | Purpose |
 |---|---|---|
 | `GET` | `https://e3d.ai/api/financial-stress-monitor` | Latest published evaluation → `{ event }` |
-| `POST` | `https://e3d.ai/api/mailing-list/signup` | `{ email, list }` → `{ success, needsVerification, message }` |
-| `POST` | `https://e3d.ai/verifyEmailCode` | `{ username, code }` → `{ success, message }` |
+| `POST` | `https://e3d.ai/api/mailing-list/signup` | `{ email, list }` → `{ success, message }` |
+
+**Mailing-list signup is double opt-in, account-free.** `/api/mailing-list/signup` writes a
+row keyed by email address only (no e3d.ai account is created) and emails a confirmation
+*link*, not a code — clicking it hits an e3d.ai-hosted confirm endpoint directly. This
+front end has nothing to render for that step and calls no follow-up endpoint; `success`
+here means "signup accepted, confirmation email sent," not "subscribed." (Previously this
+flowed through account creation + `/verifyEmailCode`; retired 2026-09-12 — that path
+required a full e3d.ai account for a mailing-list-only action and its `OPTIONS` preflight
+was never wired up, so verification always failed with a CORS error.)
 
 **Proposed additions:**
 
