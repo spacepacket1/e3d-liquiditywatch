@@ -51,7 +51,7 @@ human-authored; deterministic code decides what publishes.
 policy-forcing financial-system stress. This is the product's identity and stays 0–100
 (the gauge, the newsletter, `about.html`).
 
-> **Scale convention.** The headline score is the *only* 0–100 field. Every other
+> **Scale convention.** The headline score is the *only upstream* 0–100 field. Every other
 > magnitude in the model — sub-scores, node states, edge confidence, probabilities — is a
 > float **0.0–1.0**, matching E3D's `shared_enums`/`FlowGraph` convention
 > (`Field(ge=0.0, le=1.0)` throughout `e3d-maps/schemas/`). The front end scales for
@@ -80,6 +80,55 @@ behavior*, not just pressure: `CONTROLLED_STABILIZATION` = repo ops rising, Trea
 liquidity ops, coordinated messaging; `SYSTEMIC_BACKSTOP` = emergency facilities, QE,
 guarantees; `MONETARY_REGIME_CHANGE` = yield-curve control, financial repression, major
 currency change.
+
+## 1.1 Personal Liquidity Exposure (presentation derivative)
+
+Personal Liquidity Exposure is the sole narrow deterministic score derived in this
+presentation repository. It is an informational 0–100 stress-sensitivity view of a
+visitor's chosen cash/equities, BTC, ETH, and XRP allocation. It is not the upstream U.S.
+Financial Stress Score, expected performance, a loss probability, investment advice, or
+a market-price prediction. The upstream headline model and its band table are unchanged.
+
+Let `M` be `final_score` clamped to 0–100. For each of BTC, ETH, and XRP, the calculator
+uses the first case-insensitive matching `asset_triggers` entry and reads only its
+`utility_score`. It passes that value and `schema_version` through
+`scaledUnitPercent`: v1 values use the 0.0–1.0 scale, while legacy events without a
+schema version use 0–100. The scaled utility `U` is clamped to 0–100. Missing,
+non-numeric, non-finite, or otherwise unusable utilities instead use the neutral fallback
+`U = 100 - M`; this makes that asset's stress exactly `M`.
+
+The component stresses and weighted exposure are:
+
+```
+cashStress = M
+cryptoStress(U) = 0.70 * M + 0.30 * (100 - U)
+baseExposure = (cashEquities * cashStress
+              + btc * btcStress
+              + eth * ethStress
+              + xrp * xrpStress) / 100
+preClampScore = baseExposure * (leveraged ? 1.15 : 1)
+personalScore = Math.round(clamp(preClampScore, 0, 100))
+```
+
+Allocations are percentages from 0 through 100 and must total exactly 100. Leverage is
+applied before clamping, and the displayed score is rounded only once, after clamping.
+The displayed score uses the existing headline regime-band labels and their existing
+first-match behavior at shared inclusive boundaries.
+
+The next-regime scenario is also presentation-only. The current macro band is found by
+classifying clamped `M` with `gaugeBand`; its next entry comes directly from the existing
+ordered band table. Because adjacent bands share inclusive boundaries, the next band's
+stored `min` is used only if `gaugeBand(next.min)` identifies that next band by object
+identity. Otherwise `currentBand.max + 1` is used only if it identifies the next band by
+the same test. If neither probe matches, or the current band is the last one, there is no
+scenario.
+
+The scenario replaces `M` with that next-regime macro input while keeping the allocation,
+leverage, and already resolved current utilities unchanged. In particular, a neutral
+fallback is computed once from current `M` and is not recomputed for the scenario. The
+same stress, weighting, leverage, clamp, round, and personal-band steps then run again.
+Its delta is the signed integer `scenario personalScore - current personalScore`; it
+describes sensitivity to the next macro regime, not a forecast.
 
 ---
 
