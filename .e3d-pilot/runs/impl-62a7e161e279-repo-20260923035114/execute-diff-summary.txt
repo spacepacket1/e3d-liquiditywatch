@@ -1,0 +1,6 @@
+branch: e3d-pilot/impl-62a7e161e279-repo-20260923035114
+worktree: /var/folders/vn/jrwn6x0579v_26grcpvwp_200000gn/T//e3d-pilot.impl-62a7e161e279-repo-20260923035114.RPppUp
+diff_files: 8
+diff_lines: 1600
+max_diff_files: 30
+max_diff_lines: 3200

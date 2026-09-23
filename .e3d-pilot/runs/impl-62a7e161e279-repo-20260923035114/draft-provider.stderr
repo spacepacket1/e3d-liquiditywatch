@@ -1,0 +1,1047 @@
+OpenAI Codex v0.149.0
+--------
+workdir: /Users/mini/e3d-liquiditywatch
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a0cc79-d6b3-70d3-a217-56654a195d84
+--------
+user
+You are the draft stage of an autonomous repo-improvement pipeline.
+Turn the selected candidate below into a complete, csr-shaped phased
+Markdown spec that codex-spec-runner (csr) can run without any hand-editing.
+
+Follow these csr spec conventions exactly:
+
+# codex-spec-runner Spec Conventions (bundled copy)
+
+Bundled from `codex-spec-runner`'s README (`Spec Format` and `Spec Annotations`
+sections, runner version `0.3.0`) so the draft stage always has this contract
+available even when csr isn't checked out at a known path. If csr's own README
+changes, update this file to match.
+
+## Spec Format
+
+The spec should be Markdown with phase headings that include a phase number:
+
+```md
+## Phase 1 - Historical Replay
+## Phase 2 - Walk-Forward Validation
+## 6. Phase 3 - Execution Simulation
+```
+
+The runner extracts each phase section from its heading until the next phase heading.
+Phase metadata is parsed once per runner process, sorted numerically, and duplicate phase numbers fail before the provider is launched.
+
+## Spec Annotations
+
+Specs can override a phase model, add extra read files, and include verification hints with HTML comments inside the phase body:
+
+```md
+## Phase 2 - Report Writer
+
+<!-- runner:model=mini -->
+<!-- runner:read=docs/reporting-notes.md -->
+<!-- runner:verify=bash tests/reporting.sh -->
+```
+
+- `runner:model` overrides heuristic routing for that phase across providers
+- `runner:read` adds files to the "Read first" block
+- `runner:verify` tells the provider what to run and is rerun independently by the runner after a successful phase
+- legacy `codex:*` annotations are still accepted; `codex:model` only applies when `PROVIDER=codex`
+
+`runner:model` must name a provider csr's execute step actually dispatches: today that is only `codex` or `claude` (for example `runner:model=codex:gpt-5.6-sol`). Never use a bare tier name alone without confirming it resolves under the target provider, and never invent a third provider name.
+
+**Always use `runner:model=codex:<model>`, never `claude:*`, for every phase right now.** csr's `claude` provider path (`run_claude_phase` in `codex-spec-runner`) invokes `claude --print --permission-mode default` with no TTY to approve tool calls, so every `Edit`/`Write` the model attempts is silently denied while the process still exits 0 -- the phase reports success with zero files changed and no provider-authored handoff. This is not hypothetical: it happened on idea-17100e68160f's Phase 1 (`e3d-oppscan`, run `impl-17100e68160f-repo-20260922164753`, 2026-09-22) and blocked the whole implementation. Until `codex-spec-runner`'s claude path is fixed to run in a permission mode that works headless (e.g. `acceptEdits`/`bypassPermissions` instead of `default`), do not draft any phase with `runner:model=claude:*`.
+
+Codex model availability depends on how this machine's Codex CLI is authenticated (ChatGPT account vs. API key) and changes over time as OpenAI deprecates or renames models — a model that worked previously can start failing with "model not supported" or a 404 with no warning. Do not copy a `codex:<model>` string from this file, from an old spec, or from memory without checking it is still current: read the most recent successful rows in `.codex-spec-runner/manifest.tsv` (same directory as this file's parent's `.codex-spec-runner/`) for the last model that actually completed a phase, or run `codex exec --model <model> -` with a trivial prompt and confirm it returns normally before drafting a phase annotation that depends on it. `gpt-5.5` and `gpt-5.4-mini` are both confirmed non-working under a ChatGPT-authenticated Codex CLI as of 2026-09; treat any specific model string in this file, including the example above, as illustrative only, never as a verified-current default.
+
+Hard requirements for your output:
+- Start with a "# <Title>" heading, then "## Overview", "## Goals",
+  "## Non-Goals", "## Existing Files", and "## Shared Constraints" sections.
+- Follow those with one or more numbered "## Phase N - Title" sections,
+  starting at Phase 1, each with "### Requirements" and
+  "### Acceptance Criteria" subsections.
+- Immediately under each phase heading, include exactly one
+  "<!-- runner:model=PROVIDER:MODEL -->" annotation where PROVIDER is
+  literally "codex" or "claude" (never "local", never anything else, and
+  never omitted).
+- Also under each phase heading, include one or more
+  "<!-- pilot:touches=<glob> -->" annotations (one per line, one glob per
+  annotation) naming every file/path glob that phase's Requirements will
+  touch. Every phase must have at least one.
+- Add "<!-- runner:read=... -->" / "<!-- runner:verify=... -->"
+  annotations where useful, per the conventions above.
+- When configured verification commands are listed in Context, use those
+  commands for runner:verify annotations; do not invent a broader package
+  script that may already be broken on the unchanged repository.
+- None of the pilot:touches globs for any phase may match any of these
+  protected paths -- never propose modifying them:
+- .env*
+- Keep the whole spec scoped to plausibly fit within 30 changed files and
+  3200 changed lines total across all phases.
+
+Respond in exactly this shape:
+
+If, and only if, you can scope this candidate to satisfy every hard
+requirement above, wrap the complete spec Markdown in a fenced block
+starting with ```spec and ending with ```, then follow it with exactly:
+
+---DRAFT-STATUS---
+status: ok
+reason: <one line>
+
+If you cannot scope it that small, or it would require touching a
+protected path, do NOT emit a ```spec block at all: respond with only
+exactly:
+
+---DRAFT-STATUS---
+status: too-large
+reason: <one line explaining why it cannot be scoped>
+
+Context:
+
+## Selected Candidate (candidates.md)
+
+```text
+---
+selected: personal-liquidity-exposure-calculator
+reason: approved idea implementation
+focus: default
+---
+
+# Candidates
+
+## Proposed Candidates
+
+### Candidate personal-liquidity-exposure-calculator: Personal Liquidity Exposure calculator -- fully ungated, lead-gen via per-mix alert signup, no monetization
+Duplicate: no
+Dedup rationale: First e3d-pilot ledger entry for e3d-liquiditywatch and first idea proposing an interactive/personalized feature on top of its current passive single-gauge display. Not a duplicate of the existing mailing-list signup -- this adds a new reason to sign up (an alert on your own saved mix) rather than changing the general signup mechanism. Proposed directly by the repo owner (spacepacket@gmail.com) via conversation on 2026-09-22.
+Category: growth
+Analogy: Same lead-magnet shape as the e3d-oppscan AI Readiness calculator (idea-17100e68160f, e3d-oppscan) -- a free, instant, deterministic, dropdown-driven score reusing an existing pipeline's published output -- but converting via a forward-looking alert hook instead of a paywall, since liquiditywatch has no paid tier and none is in scope for this build.
+Attraction (1-5): 3
+Retention (1-5): 2
+Effort: low
+Revenue (1-5|n/a): n/a
+Description: SUPERSEDES an earlier "gate the number behind email" design -- do not implement a numeric gate. Final scope, per e3d-debate verdict (docs/debates/2026-09-22-liquidity-exposure-calculator/transcript.md, full consensus) and the repo owner's explicit decision to stay free-only with the goal of user acquisition/retention (no monetization in this build): (1) Add an interactive 'Personal Liquidity Exposure' calculator to liquiditywatch.e3d.ai: a short dropdown form (rough portfolio mix -- % equities/cash-like, % BTC, % ETH, % XRP, and a leverage/margin toggle) combining the visitor's inputs with data the site already fetches from the live financial-stress-monitor API (event.final_score, and event.asset_triggers[].utility_score for BTC/ETH/XRP per docs/API-CONTRACT.md) into a deterministic 0-100 personal exposure score, banded to the same six regimes the main gauge uses. There is no existing scoring function to reuse -- this is new, deterministic arithmetic, computed client- or server-side with zero new LLM calls. (2) The calculator, the resulting score, the band, and the methodology/formula are ALL fully public and ungated -- nobody enters an email to see their own number; a sophisticated finance/crypto audience treats gating deterministic arithmetic as a trust-breaking marketing toll and bounces. (3) Pair the instant score with a forward-looking scenario delta ('your score is 68 today; it would be 81 if macro stress escalates to the next regime'), computed from the same already-published data, to make the result feel perishable/live rather than a one-time toy -- this is the key retention mechanic. (4) The lead-gen hook: let the visitor optionally save their mix and sign up via the EXISTING POST /api/mailing-list/signup endpoint (a distinct `list` value, e.g. 'liquiditywatch-exposure-calculator', for attribution) for an alert when their saved mix crosses a regime boundary on the next published (material-move-only) update -- this is what gives someone a reason to come back, not a payment or a data-hiding gate. (5) Explicitly OUT of scope for this build: any paid tier, custom user-set thresholds, saved-allocation history, or an API -- these were flagged as a possible future monetization seed but are deferred; do not build them now. Reuse the existing SSR caching pattern in server.js (event fetched/cached, not re-fetched per calculator interaction) and the existing render.js helper conventions rather than introducing a second data-fetching path.
+
+```
+
+## Target Repo Tracked Files (truncated to 300)
+```text
+.gitignore
+CLAUDE.md
+README.md
+docs/API-CONTRACT.md
+docs/MODEL.draft.md
+docs/MODEL.md
+docs/VISION.md
+docs/debates/2026-09-08-pipeline-build-spec/QUESTION.md
+docs/debates/2026-09-08-pipeline-build-spec/RESULT.md
+docs/debates/2026-09-08-pipeline-build-spec/run/transcript.md
+docs/debates/2026-09-08-vision-strategy/PROMPT.md
+docs/debates/2026-09-08-vision-strategy/QUESTION.md
+docs/debates/2026-09-08-vision-strategy/RESULT.md
+docs/debates/2026-09-08-vision-strategy/run/transcript.md
+docs/liquiditywatch-session-notes.md
+package-lock.json
+package.json
+public/about.html
+public/favicon-180.png
+public/favicon.svg
+public/index.html
+public/liquiditywatch.png
+public/liquiditywatch2.jpg
+public/liquiditywatch3.jpg
+public/render.js
+server.js
+```
+
+## Repo Docs
+### CLAUDE.md
+```text
+# CLAUDE.md — e3d-liquiditywatch
+
+Short rules for working in this repo. Not a README (see `README.md`) and not the model
+(see `docs/MODEL.md`).
+
+## What this repo is
+
+The **presentation stage** of LiquidityWatch, and nothing else. An Express server
+(`server.js`) serving static files from `public/` (`index.html`, `about.html`). Live at
+`liquiditywatch.e3d.ai`.
+
+The three-stage scoring pipeline (research → independent critique → narrative synthesis)
+lives **elsewhere in the E3D stack**. It is not in this repo and must not be added here.
+
+## Rules
+
+1. **Compute nothing.** This repo renders a model it is handed. No scoring, no data
+   ingestion, no LLM calls. If a change needs new computed data, it needs a new field in
+   the API contract, not new code here.
+2. **The integration boundary is `docs/API-CONTRACT.md`** — the JSON contract with the
+   `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`,
+   `/verifyEmailCode`). No shared code with the pipeline; the contract is the only joint.
+   This follows the E3D ecosystem law: stages are joined "by shared contracts, not shared
+   code" (`e3d-maps/docs/E3D_ECOSYSTEM_ARCHITECTURE.md`).
+3. **Model semantics live in `docs/MODEL.md`.** When the meaning of a score, band, regime,
+   or the causal graph is in question, that document is the source of truth.
+4. **Band table sync.** `docs/MODEL.md` §1 is the source of truth for the 0–100 bands and
+   regimes. `GAUGE_BANDS` in `public/index.html` and the prose in `public/about.html` must
+   match it. Change the doc first.
+5. **Scale.** `final_score` / `final_score_before` are integers **0–100** (product
+   identity). Every other magnitude — sub-scores, node states, edge confidence,
+   probabilities — is a float **0.0–1.0**, matching E3D `shared_enums`. See
+   `docs/API-CONTRACT.md` §Scale.
+6. **Resilience contract.** Every API field is optional. Every render helper null-checks
+   before using a field, and the panel renders from whatever subset is present. New API
+   fields ship additively with no front-end coordination. Do not break this — it is what
+   lets the two halves evolve independently.
+7. **AI suggests, code decides.** The causal graph's *structure* (nodes, edges,
+   polarity) is human-authored in `docs/MODEL.md`. The pipeline fills in per-cycle
+   *states* only. A model-proposed new node/edge renders as provisional until a human
+   promotes it into the doc.
+8. **No build step.** `public/` is served as-is. No bundler, no framework, no transpile.
+   Keep `index.html` self-contained (inline `<style>`/`<script>`).
+
+## Run
+
+```
+npm install
+npm start        # serves public/ on :3008 (or $PORT)
+```
+
+## Ecosystem context
+
+Part of E3D — a FutCo intelligence product. For how this repo relates to the others, ask
+the `futco-mcp` MCP server (`get_repo e3d-liquiditywatch`, `get_repo ecosystem-overview`).
+LiquidityWatch is intended as the first domain-specific implementation of the E3D
+intelligence-graph architecture (`Entity → Relationship → Event → Decision → Outcome →
+Learning`), not a standalone dashboard — see `docs/MODEL.md` §6 and `docs/VISION.md`.
+
+```
+### README.md
+```text
+# LiquidityWatch
+
+**How close is the U.S. financial system to a point where policymakers are forced to act?**
+
+![LiquidityWatch — Macro + Crypto Liquidity Intelligence](public/liquiditywatch3.jpg)
+
+Live at **[liquiditywatch.e3d.ai](https://liquiditywatch.e3d.ai)** — a single U.S. Financial Stress Score, 0–100, that only makes noise when something material actually changes.
+
+## Why this exists
+
+Recession probability, VIX, inflation prints, Treasury yields — each tells you something, but none of them answer the question that actually matters for markets: *is the plumbing about to break, and is the Fed/Treasury about to step in?* That's a synthesis problem — Treasury-market mechanics, funding-market stress, and how policymakers are actually behaving, read together — not something you get from a single indicator or a dashboard full of them.
+
+LiquidityWatch answers that one question, as one number, and stays quiet otherwise.
+
+## How the score is produced
+
+Every evaluation runs through three independent AI stages — a different model at each step, so no single model's judgment silently becomes the answer:
+
+1. **Research & scoring** — a deep-research model does live web research across Treasury, funding-market, and Fed-policy sources and proposes a score.
+2. **Independent critique** — a second model reviews the same evidence *without seeing the first model's number* and derives its own. A real disagreement between the two triggers a targeted follow-up search on the specific point in dispute.
+3. **Narrative synthesis** — a third model writes the plain-language summary, explicitly explaining any disagreement rather than quietly averaging it away.
+
+Every evaluation is stored, but only ones judged *materially different* from the last published reading trigger a new score, a notification, and a newsletter issue. No daily noise.
+
+## What you get
+
+- **A live gauge, 0–100** across six regimes — from *Accommodative* through *Mild Watchfulness*, *Contained Tension*, *Restrictive Policy*, the *Policy-Forcing Danger Zone*, up to *Market Dysfunction*.
+- **Trigger metrics tracked cycle-over-cycle**: Controlled Break Risk (odds current stress breaks into an uncontrolled crisis), Liquidity Response Probability (odds the Fed/Treasury actually supplies new support soon), and Phase (tightening → liquidity response beginning → full backstop underway).
+- **Asset triggers for BTC, ETH, and XRP** — a utility score for how much each is actually functioning as settlement/bridge liquidity right now, not just price momentum.
+- **A mailing list** that emails you only on material moves — see [`/about`](https://liquiditywatch.e3d.ai/about.html) for the full methodology and scale.
+
+Fully automated end to end: a material evaluation publishes the moment the three-stage process completes, with no human-approval gate in the path. Not investment advice — an AI research and synthesis process, provided for informational purposes only.
+
+## This repo
+
+Just the static front end: an Express server (`server.js`) serving `public/` — the gauge, the score panel, and the mailing-list signup — which reads live data from the `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`). The scoring pipeline itself lives elsewhere in the E3D stack.
+
+```
+npm install
+npm start   # serves public/ on :3008 (or $PORT)
+```
+
+Part of the [E3D](https://e3d.ai) ecosystem — a FutCo intelligence product.
+
+```
+
+## Configured Verification Commands
+
+- `npm install && node --check server.js && node --check public/render.js`
+
+codex
+I’ll inspect the current UI, rendering/data flow, API contract, and recent csr manifest entries so the phases use a verified model and stay consistent with the repository’s presentation-only boundary.
+exec
+/bin/zsh -lc "pwd && rg --files -g '"'!.env*'"' | sort && if [ -f .codex-spec-runner/manifest.tsv ]; then tail -n 30 .codex-spec-runner/manifest.tsv; elif [ -f ../.codex-spec-runner/manifest.tsv ]; then tail -n 30 ../.codex-spec-runner/manifest.tsv; else find .. -path '*/.codex-spec-runner/manifest.tsv' -maxdepth 4 -print; fi" in /Users/mini/e3d-liquiditywatch
+ succeeded in 0ms:
+/Users/mini/e3d-liquiditywatch
+CLAUDE.md
+README.md
+docs/API-CONTRACT.md
+docs/MODEL.draft.md
+docs/MODEL.md
+docs/VISION.md
+docs/debates/2026-09-08-pipeline-build-spec/QUESTION.md
+docs/debates/2026-09-08-pipeline-build-spec/RESULT.md
+docs/debates/2026-09-08-pipeline-build-spec/run/transcript.md
+docs/debates/2026-09-08-vision-strategy/PROMPT.md
+docs/debates/2026-09-08-vision-strategy/QUESTION.md
+docs/debates/2026-09-08-vision-strategy/RESULT.md
+docs/debates/2026-09-08-vision-strategy/run/transcript.md
+docs/debates/2026-09-10-linkedin-newsletter-automation/QUESTION.md
+docs/debates/2026-09-10-linkedin-newsletter-automation/RESULT.md
+docs/debates/2026-09-10-linkedin-newsletter-automation/run/transcript.md
+docs/debates/2026-09-22-liquidity-exposure-calculator/question.md
+docs/debates/2026-09-22-liquidity-exposure-calculator/transcript.md
+docs/liquiditywatch-session-notes.md
+package-lock.json
+package.json
+public/about.html
+public/favicon-180.png
+public/favicon.svg
+public/index.html
+public/liquiditywatch.png
+public/liquiditywatch2.jpg
+public/liquiditywatch3.jpg
+public/render.js
+server.js
+2026-04-29T12:43:18-0700	/Users/mini/e3d/docs/e3d_pcap_repo_recovery_spec.md	1	Safety Audit And Repo Creation	gpt-5.5	exec	0	1
+
+exec
+/bin/zsh -lc "sed -n '1,260p' server.js
+sed -n '1,280p' public/render.js
+rg -n \"GAUGE_BANDS|mailing|signup|financial-stress|final_score|asset_triggers|<main|</main>|script\" public/index.html docs/API-CONTRACT.md docs/MODEL.md package.json
+sed -n '1,240p' docs/debates/2026-09-22-liquidity-exposure-calculator/transcript.md" in /Users/mini/e3d-liquiditywatch
+ succeeded in 0ms:
+'use strict';
+
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const {
+  buildScorePanelHtml,
+  subscoresHtml,
+  classificationBlocksHtml,
+} = require('./public/render.js');
+
+const app = express();
+const PORT = process.env.PORT || 3008;
+const API_BASE = process.env.API_BASE || 'https://e3d.ai';
+const CACHE_TTL_MS = 60 * 1000;
+
+// Server-side render the current event into index.html before serving it,
+// so a fetcher that doesn't execute JavaScript (crawlers, link previews,
+// AI browsing tools) sees the real score/briefing instead of the
+// "Loading..." placeholder the client-side-only version always showed.
+// Client-side JS (public/render.js + index.html's own script) still runs
+// on top of this for live refresh - this is progressive enhancement, not
+// a replacement for it. Cached briefly so we're not hitting the live API
+// on every page load.
+let cachedEvent = null;
+let cachedAt = 0;
+
+async function getEvent() {
+  const now = Date.now();
+  if (now - cachedAt < CACHE_TTL_MS) {
+    return cachedEvent;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/financial-stress-monitor`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`upstream responded ${res.status}`);
+    const data = await res.json();
+    cachedEvent = (data && data.event) || null;
+    cachedAt = now;
+  } catch (err) {
+    console.error('[ssr] failed to fetch financial-stress-monitor:', err.message);
+    // Serve whatever was last cached (possibly still null) rather than
+    // failing the page; leave `cachedAt` alone so the next request retries
+    // the fetch instead of being stuck on a stale "success" timestamp.
+  }
+  return cachedEvent;
+}
+
+function renderIndexHtml(event) {
+  const template = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  if (!event) return template; // nothing to inject - client-side fetch takes over exactly as before
+
+  let html = template.replace(
+    '<div class="score-panel" id="score-panel">\n      <div class="empty-state">Loading&hellip;</div>\n    </div>',
+    `<div class="score-panel" id="score-panel">${buildScorePanelHtml(event)}</div>`,
+  );
+
+  const subHtml = subscoresHtml(event.subscores);
+  if (subHtml) {
+    html = html
+      .replace('<section id="subscore-breakdown" hidden>', '<section id="subscore-breakdown">')
+      .replace('<div class="subscore-panel" id="subscore-panel"></div>', `<div class="subscore-panel" id="subscore-panel">${subHtml}</div>`);
+  }
+
+  const blocksHtml = classificationBlocksHtml(event.classification_blocks);
+  if (blocksHtml) {
+    html = html
+      .replace('<section id="classification-body" hidden>', '<section id="classification-body">')
+      .replace('<div class="classification-panel" id="classification-panel"></div>', `<div class="classification-panel" id="classification-panel">${blocksHtml}</div>`);
+  }
+
+  // newsletter_body_html is contract-documented trusted HTML, rendered
+  // as-is - matches the client's existing `.innerHTML = ...` handling.
+  if (event.newsletter_body_html) {
+    html = html
+      .replace('<section id="newsletter-body" hidden>', '<section id="newsletter-body">')
+      .replace('<div class="newsletter-panel" id="newsletter-panel"></div>', `<div class="newsletter-panel" id="newsletter-panel">${event.newsletter_body_html}</div>`);
+  }
+
+  return html;
+}
+
+app.get(['/', '/index.html'], async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const event = await getEvent();
+    res.type('html').send(renderIndexHtml(event));
+  } catch (err) {
+    // renderIndexHtml only throws on a disk read failure - getEvent already
+    // swallows its own errors. Fall back to the plain static file so a bug
+    // here can never take the page down.
+    console.error('[ssr] render failed, falling back to static file:', err.message);
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+});
+
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+
+app.listen(PORT, () => {
+  console.log(`liquiditywatch server running on port ${PORT} (SSR + static)`);
+});
+'use strict';
+
+// Pure rendering helpers shared between the server (server.js, for
+// server-side rendering the initial page so non-JS-executing fetchers see
+// real content, not "Loading...") and the browser (public/index.html, for
+// live client-side refresh). No DOM/window/document APIs here - every
+// function takes plain data and returns an HTML string, so it runs
+// identically in Node and in a `<script>` tag. No build step, no bundler:
+// this file is `require()`d directly by server.js and loaded directly via
+// `<script src="/render.js">` in index.html.
+
+function escapeHtml(text) {
+  return String(text == null ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Matches the bands described on /about.html (0-15 accommodative through
+// 91-100 dysfunction/intervention) - kept as one source of truth here since
+// the gauge needs concrete colors, not just band boundaries.
+const GAUGE_BANDS = [
+  { min: 0,  max: 15,  color: '#2ecc71', label: 'Accommodative' },
+  { min: 15, max: 35,  color: '#a3d977', label: 'Mild Watchfulness' },
+  { min: 35, max: 55,  color: '#e8b84b', label: 'Contained Tension' },
+  { min: 55, max: 75,  color: '#f0954a', label: 'Restrictive Policy' },
+  { min: 75, max: 90,  color: '#e8743a', label: 'Policy-Forcing Danger Zone' },
+  { min: 90, max: 100, color: '#e0574f', label: 'Market Dysfunction' },
+];
+
+function gaugeBand(score) {
+  return GAUGE_BANDS.find((b) => score >= b.min && score <= b.max) || GAUGE_BANDS[GAUGE_BANDS.length - 1];
+}
+
+function gaugeBandColor(score) {
+  return gaugeBand(score).color;
+}
+
+function gaugeAngleForValue(v) {
+  // 180deg (left, v=0) -> 0deg (right, v=100); standard math angle, y-up.
+  return 180 - (v / 100) * 180;
+}
+
+function gaugePolarPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+}
+
+function gaugeArcPath(cx, cy, r, v1, v2) {
+  const p1 = gaugePolarPoint(cx, cy, r, gaugeAngleForValue(v1));
+  const p2 = gaugePolarPoint(cx, cy, r, gaugeAngleForValue(v2));
+  return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+}
+
+function buildGaugeSvg(score) {
+  const cx = 160;
+  const cy = 155;
+  const r = 118;
+  const strokeW = 22;
+  const clamped = Math.max(0, Math.min(100, typeof score === 'number' ? score : 0));
+  const needleLen = r - strokeW / 2 - 6;
+  const needleTip = gaugePolarPoint(cx, cy, needleLen, gaugeAngleForValue(clamped));
+  const pivotR = 9;
+
+  const bands = GAUGE_BANDS.map((b) => `<path d="${gaugeArcPath(cx, cy, r, b.min, b.max)}" stroke="${b.color}" stroke-width="${strokeW}" fill="none"/>`).join('');
+  const ticks = [0, 25, 50, 75, 100].map((v) => {
+    const p = gaugePolarPoint(cx, cy, r + strokeW / 2 + 14, gaugeAngleForValue(v));
+    return `<text class="gauge-tick" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${v}</text>`;
+  }).join('');
+
+  return `
+    <svg class="gauge-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+      ${bands}
+      ${ticks}
+      <line x1="${cx}" y1="${cy}" x2="${needleTip.x.toFixed(2)}" y2="${needleTip.y.toFixed(2)}" stroke="#e9edf5" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="${pivotR}" fill="#e9edf5"/>
+      <circle cx="${cx}" cy="${cy}" r="${pivotR - 3}" fill="${gaugeBandColor(clamped)}"/>
+    </svg>
+  `;
+}
+
+function gaugeDeltaHtml(after, before) {
+  if (typeof after !== 'number' || typeof before !== 'number') return '';
+  const diff = Math.round(after) - Math.round(before);
+  if (diff === 0) return `<div class="gauge-delta" style="color:var(--text-dim)">No change vs last reading</div>`;
+  const color = diff > 0 ? 'var(--red)' : 'var(--green)';
+  const symbol = diff > 0 ? '↑' : '↓';
+  return `<div class="gauge-delta" style="color:${color}">${symbol} ${diff > 0 ? '+' : ''}${diff} vs last reading (${Math.round(before)})</div>`;
+}
+
+const PHASE_LABELS = {
+  1: 'Tightening / policy-threat phase',
+  2: 'Liquidity response beginning',
+  3: 'Full backstop underway',
+};
+
+function phaseBadgeHtml(phase) {
+  if (!phase || typeof phase.value !== 'number') return '';
+  const desc = PHASE_LABELS[phase.value] || '';
+  return `<div class="phase-badge" title="${escapeHtml(desc)}">Phase ${phase.value} of 3</div>`;
+}
+
+// v1 (schema_version present) ships trigger-metric/asset-score values as
+// 0.0-1.0; a pre-v1 event (no schema_version) still has them as 0-100 -
+// see docs/API-CONTRACT.md's migration note. Every reader of a raw value
+// from `event.pipeline`-derived data must go through this so the two
+// scales are never displayed as if they were the same number.
+function scaledUnitPercent(rawValue, schemaVersion) {
+  if (typeof rawValue !== 'number') return null;
+  const unit = schemaVersion ? rawValue : rawValue / 100;
+  return Math.round(unit * 100);
+}
+
+// velocity/acceleration are already in the same unit as the value they
+// describe (see docs/API-CONTRACT.md); render them as a short trend note
+// rather than raw numbers, which are meaningless without the scale.
+function trendNoteHtml(velocity, acceleration) {
+  if (typeof velocity !== 'number' || velocity === 0) return '';
+  const dir = velocity > 0 ? 'rising' : 'falling';
+  const sameSign = typeof acceleration === 'number' && acceleration !== 0
+    && Math.sign(acceleration) === Math.sign(velocity);
+  const oppositeSign = typeof acceleration === 'number' && acceleration !== 0 && !sameSign;
+  const pace = sameSign ? ', accelerating' : oppositeSign ? ', slowing' : '';
+  return ` <span class="trend-note">(${dir}${pace})</span>`;
+}
+
+function metricDeltaHtml(metric, schemaVersion) {
+  if (!metric || typeof metric.value !== 'number') return '';
+  const pct = scaledUnitPercent(metric.value, schemaVersion);
+  const hasPrevious = typeof metric.previous_value === 'number';
+  const prevPct = hasPrevious ? scaledUnitPercent(metric.previous_value, schemaVersion) : null;
+  const delta = hasPrevious ? pct - prevPct : 0;
+  const arrow = !hasPrevious ? '' : delta > 0 ? ' ↑' : delta < 0 ? ' ↓' : '';
+  const from = hasPrevious ? `, was ${prevPct}%` : '';
+  return `<div class="trigger-chip"><div class="trigger-chip-label">${escapeHtml(metric.label)}</div><div class="trigger-chip-value">${pct}%${arrow}${trendNoteHtml(metric.velocity, metric.acceleration)}</div><div class="trigger-chip-note">${metric.change_reason ? escapeHtml(metric.change_reason) : ''}${from}</div></div>`;
+}
+
+function triggerMetricsHtml(event) {
+  const chips = [
+    event.controlled_break_risk ? metricDeltaHtml({ ...event.controlled_break_risk, label: 'Controlled Break Risk' }, event.schema_version) : '',
+    event.liquidity_response_probability ? metricDeltaHtml({ ...event.liquidity_response_probability, label: 'Liquidity Response Probability' }, event.schema_version) : '',
+  ].filter(Boolean);
+  return chips.length ? `<div class="trigger-metrics">${chips.join('')}</div>` : '';
+}
+
+const POLICY_CLASSIFIER_LABELS = {
+  normal: 'Normal',
+  stress_building: 'Stress Building',
+  controlled_stabilization: 'Controlled Stabilization',
+  systemic_backstop: 'Systemic Backstop',
+  monetary_regime_change: 'Monetary Regime Change',
+};
+
+function policyClassifierBadgeHtml(classifier) {
+  if (!classifier) return '';
+  const label = POLICY_CLASSIFIER_LABELS[classifier] || String(classifier).replace(/[_-]/g, ' ');
+  return `<div class="classifier-badge">${escapeHtml(label)}</div>`;
+}
+
+const BRIDGE_ROLE_LABELS = {
+  adjacent_asset: 'Adjacent asset',
+  optional_bridge: 'Optional bridge',
+  growing_liquidity_layer: 'Growing liquidity layer',
+  core_routing_asset: 'Core routing asset',
+};
+
+const FLOW_COMPOSITION_LABELS = {
+  stablecoin_to_stablecoin: 'Stablecoin → stablecoin (bypasses XRP)',
+  stablecoin_via_xrp: 'Stablecoin → XRP → stablecoin',
+  mixed: 'Mixed flow composition',
+};
+
+// score_kind/bridge_role are v1 fields; fall back to the pre-v1 asset-name
+// heuristic when they're absent so an older event still renders sensibly.
+function assetScoreLabel(asset, scoreKind) {
+  if (scoreKind === 'utility') return 'Utility';
+  if (scoreKind === 'market_confirmation') return 'Market Confirmation';
+  return String(asset || '').toUpperCase() === 'XRP' ? 'Utility' : 'Market Confirmation';
+}
+
+function assetTriggersHtml(assetTriggers, schemaVersion) {
+  const list = Array.isArray(assetTriggers) ? assetTriggers : [];
+  if (!list.length) return '';
+  return `<div class="asset-triggers">${list.map((a) => {
+    const pct = scaledUnitPercent(Number(a.utility_score), schemaVersion) ?? 0;
+    const bridgeRole = a.bridge_role && BRIDGE_ROLE_LABELS[a.bridge_role]
+      ? `<div class="asset-chip-bridge">${escapeHtml(BRIDGE_ROLE_LABELS[a.bridge_role])}</div>` : '';
+    const flowComposition = a.flow_composition && FLOW_COMPOSITION_LABELS[a.flow_composition]
+      ? `<div class="asset-chip-flow">${escapeHtml(FLOW_COMPOSITION_LABELS[a.flow_composition])}</div>` : '';
+    return `
+    <div class="asset-chip">
+      <div class="asset-chip-top"><span class="asset-chip-name">${escapeHtml(a.asset || '')}</span><span class="asset-chip-role">${escapeHtml(a.role || '')}</span></div>
+      <div class="asset-chip-note">${escapeHtml(a.note || '')}</div>
+      <div class="asset-chip-utility">${escapeHtml(assetScoreLabel(a.asset, a.score_kind))} ${pct}%</div>
+      ${bridgeRole}
+      ${flowComposition}
+    </div>
+  `;
+  }).join('')}</div>`;
+}
+
+const FALSIFIABLE_RESPONSE_LABELS = {
+  srf_expansion: 'an SRF expansion',
+  discount_window_spike: 'a discount-window usage spike',
+  swap_line_activation: 'a swap-line activation',
+  qe_restart: 'a restart of QE',
+  emergency_facility: 'a new emergency facility',
+  coordinated_messaging: 'coordinated policymaker messaging',
+  none_expected: 'no policy response',
+};
+
+function falsifiableClaimHtml(claim) {
+  if (!claim || typeof claim !== 'object') return '';
+  const responseLabel = FALSIFIABLE_RESPONSE_LABELS[claim.response_type]
+    || String(claim.response_type || '').replace(/_/g, ' ');
+  const authority = claim.responsible_authority
+    ? escapeHtml(claim.responsible_authority).replace(/^\w/, (c) => c.toUpperCase())
+    : '';
+  const window = typeof claim.observation_window_days === 'number'
+    ? `${claim.observation_window_days}-day` : '';
+  return `<div class="falsifiable-claim">
+    <div class="falsifiable-claim-label">This call is falsifiable</div>
+    <div>Expecting ${escapeHtml(responseLabel)}${authority ? ` from ${authority}` : ''}${window ? ` within a ${window} window` : ''}.</div>
+    ${claim.qualifying_action ? `<div class="falsifiable-claim-action">${escapeHtml(claim.qualifying_action)}</div>` : ''}
+  </div>`;
+}
+
+const SUBSCORE_LABELS = {
+  treasury_stress: 'Treasury Market Stress',
+  funding_stress: 'Funding Market Stress',
+  fed_response: 'Fed / Treasury Response',
+  ai_economic_impulse: 'AI Economic Impulse',
+  energy_stress: 'Energy System Stress',
+  global_liquidity: 'Global Liquidity',
+};
+
+function subscoresHtml(subscores) {
+  if (!subscores || typeof subscores !== 'object') return '';
+  const keys = Object.keys(SUBSCORE_LABELS).filter((k) => subscores[k] && typeof subscores[k].value === 'number');
+  if (!keys.length) return '';
+  return `<div class="subscore-grid">${keys.map((k) => {
+    const s = subscores[k];
+    const pct = Math.round(s.value * 100);
+    const classification = k === 'ai_economic_impulse' && s.classification
+      ? `<div class="subscore-classification">${escapeHtml(s.classification)}</div>` : '';
+    return `<div class="subscore-chip">
+      <div class="subscore-label">${escapeHtml(SUBSCORE_LABELS[k])}</div>
+      <div class="subscore-value">${pct}%</div>
+      ${classification}
+      ${s.change_reason ? `<div class="subscore-reason">${escapeHtml(s.change_reason)}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function classificationBlocksHtml(blocks) {
+  if (!blocks || typeof blocks !== 'object') return '';
+  const facts = Array.isArray(blocks.observed_facts) ? blocks.observed_facts : [];
+  const interpretation = Array.isArray(blocks.interpretation) ? blocks.interpretation : [];
+  const speculation = Array.isArray(blocks.speculation) ? blocks.speculation : [];
+  if (!facts.length && !interpretation.length && !speculation.length) return '';
+
+  function itemsHtml(items, withConfidence) {
+    return items.map((item) => `<li>${escapeHtml(item && item.text || '')}${
+      withConfidence && typeof item.confidence === 'number'
+        ? ` <span class="confidence-tag">${Math.round(item.confidence * 100)}% confidence</span>` : ''
+    }</li>`).join('');
+  }
+
+  return [
+    facts.length ? `<div class="classification-block classification-facts"><div class="classification-heading">Observed Facts</div><ul>${itemsHtml(facts, false)}</ul></div>` : '',
+    interpretation.length ? `<div class="classification-block classification-interpretation"><div class="classification-heading">Interpretation</div><ul>${itemsHtml(interpretation, true)}</ul></div>` : '',
+    // Speculation always renders as the lowest-confidence tier regardless
+    // of its own confidence number - see docs/MODEL.md SS7.
+    speculation.length ? `<div class="classification-block classification-speculation"><div class="classification-heading">Speculation</div><ul>${itemsHtml(speculation, true)}</ul></div>` : '',
+  ].join('');
+}
+
+const EMPTY_STATE_HTML = '<div class="empty-state">No stress evaluation has been published yet. The monitoring pipeline runs on a schedule &mdash; check back soon.</div>';
+const ERROR_STATE_HTML = '<div class="empty-state">Unable to load the current score right now.</div>';
+package.json:5:  "description": "liquiditywatch.e3d.ai - static front end for the E3D Macro Intelligence and U.S. Financial Stress Monitor",
+package.json:7:  "scripts": {
+docs/MODEL.md:71:These bands currently live in `public/index.html` (`GAUGE_BANDS`) and `about.html` prose.
+docs/MODEL.md:378:1. **Sync the band table.** `public/index.html` `GAUGE_BANDS` and `about.html` prose must
+public/index.html:7:<meta name="description" content="AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.">
+public/index.html:277:  .signup-panel {
+public/index.html:283:  .signup-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+public/index.html:284:  .signup-form input {
+public/index.html:294:  .signup-form input:focus { outline: none; border-color: var(--cyan); }
+public/index.html:295:  .signup-form button {
+public/index.html:305:  .signup-form button:hover { opacity: 0.9; }
+public/index.html:306:  .signup-form button:disabled { opacity: 0.5; cursor: default; }
+public/index.html:307:  .signup-status { margin-top: 10px; font-size: 13px; color: var(--text-dim); }
+public/index.html:308:  .signup-status.error { color: var(--red); }
+public/index.html:309:  .signup-status.ok { color: var(--green); }
+public/index.html:329:    .signup-panel { padding: 18px 16px; }
+public/index.html:330:    .signup-form { flex-direction: column; }
+public/index.html:331:    .signup-form input, .signup-form button { width: 100%; }
+public/index.html:371:  <section id="mailing-list">
+public/index.html:374:    <div class="signup-panel">
+public/index.html:375:      <form class="signup-form" id="signup-form">
+public/index.html:376:        <input type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
+public/index.html:377:        <button type="submit" id="signup-submit">Subscribe</button>
+public/index.html:379:      <form class="signup-form" id="verify-form" hidden>
+public/index.html:383:      <div class="signup-status" id="signup-status"></div>
+public/index.html:391:<script src="/render.js"></script>
+public/index.html:392:<script>
+public/index.html:422:    const res = await fetch(`${API_BASE}/api/financial-stress-monitor`, { cache: 'no-store' });
+public/index.html:431:  const el = document.getElementById('signup-status');
+public/index.html:433:  el.className = 'signup-status' + (kind ? ' ' + kind : '');
+public/index.html:438:document.getElementById('signup-form').addEventListener('submit', async (e) => {
+public/index.html:440:  const emailInput = document.getElementById('signup-email');
+public/index.html:441:  const submitBtn = document.getElementById('signup-submit');
+public/index.html:447:    const res = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+public/index.html:502:</script>
+docs/API-CONTRACT.md:25:| `GET` | `https://e3d.ai/api/financial-stress-monitor` | Latest published evaluation → `{ event }` |
+docs/API-CONTRACT.md:26:| `POST` | `https://e3d.ai/api/mailing-list/signup` | `{ email, list }` → `{ success, needsVerification, message }` |
+docs/API-CONTRACT.md:33:| `GET` | `…/financial-stress-monitor/history?limit=N` | Array of past `event`s (headline + sub-scores + trigger metrics only) for sparklines — see [Model open item 5 / §History](#history) |
+docs/API-CONTRACT.md:39:- **`event.final_score` and `event.final_score_before`** — integer **0–100**. The only
+docs/API-CONTRACT.md:59:    "final_score": 62,                    // int 0–100
+docs/API-CONTRACT.md:60:    "final_score_before": 58,             // int 0–100, previous published
+docs/API-CONTRACT.md:78:    "asset_triggers": [
+docs/API-CONTRACT.md:116:"final_score_velocity": 4,        // points / publish-cycle, signed
+docs/API-CONTRACT.md:117:"final_score_acceleration": 2,
+docs/API-CONTRACT.md:172:### `asset_triggers` — v1 fields
+docs/API-CONTRACT.md:257:`GET …/financial-stress-monitor/history?limit=N` → newest-first array of trimmed events:
+docs/API-CONTRACT.md:262:    "final_score": 62,
+docs/API-CONTRACT.md:296:`final_score` / `final_score_before` are **not** affected — they stay 0–100 forever.
+# Debate
+
+**Question:** We've already decided to build a "Personal Liquidity Exposure" calculator on liquiditywatch.e3d.ai (idea-62a7e161e279). The question is not whether to build it -- it's how to make it maximally effective as a lead-gen mechanic, and whether it should also seed a first monetization path for this product.
+
+Context:
+
+- liquiditywatch.e3d.ai is currently a single free page: one AI-produced U.S. Financial Stress Score (0-100, six regimes from Accommodative to Market Dysfunction), refreshed only on material moves, plus a mailing-list signup (POST /api/mailing-list/signup) as its only conversion mechanic. There is NO paid tier today -- unlike our other product e3d-oppscan, which has a $99 paid scan to funnel toward.
+- The site already publishes, per request: event.final_score (macro stress, 0-100), and event.asset_triggers[] with a utility_score for BTC/ETH/XRP (how well each is functioning as settlement/liquidity plumbing right now, not price). All of this comes from a three-stage AI research pipeline (deep research -> independent critique -> narrative synthesis) that already ran; the calculator would just consume already-published numbers, zero new LLM cost.
+- The planned calculator: visitor picks a rough portfolio mix (% equities/cash-like, % BTC, % ETH, % XRP, leverage toggle) via dropdowns, gets an instant deterministic 0-100 "Personal Liquidity Exposure" score combining their mix with the live macro score and asset utility scores. Current plan: gate the personalized number behind the existing mailing-list signup (see your own number only after giving an email), keep the calculator and its explanation otherwise free and public.
+- Audience: liquiditywatch's visitors are self-selected macro/crypto-stress watchers -- likely more sophisticated (traders, allocators, macro-curious retail) than a general consumer audience, and probably have a lower tolerance for obviously "marketing-y" gates or vague scores.
+
+Questions for the panel:
+1. Is "gate the personal number behind email" the right lead-gen mechanic for THIS audience, or does a sophisticated finance/crypto visitor react badly to a gate on a number that's "just arithmetic," and convert better with a different mechanic (e.g. ungated calculator + optional deeper-dive email capture, or a shareable/social angle instead of a gate)?
+2. What's the single biggest thing that would make this calculator actually convert to email signups, versus become a novelty people play with once and leave?
+3. Should this calculator also be the seed of liquiditywatch's first paid tier (e.g. saved/tracked exposure over time, alerts keyed to the visitor's own thresholds instead of the site's fixed regimes, an API for their score) -- or is mixing "first monetization" into a lead-gen feature a mistake that muddies both goals? If you'd seed monetization now, name the smallest viable version of it.
+
+## Round 1 -- grok-build
+
+I'll pull the idea brief and the current liquiditywatch conversion setup so the lead-gen recommendation is grounded in how the product actually works.The idea lookup failed on permissions; I’ll grab the product page and mailing-list flow so the conversion take is based on what’s live.**Ungate the number. Convert on “tell me when *mine* moves,” not on hiding arithmetic.**
+
+Gating a deterministic 0–100 behind email is the wrong mechanic for this audience. They already see `final_score` and asset utilities. Once they know the mix is dropdown math, a gate reads as a lead form, not a product. They bounce or throwaway-email. Show the score instantly, publish the formula, encode mix in a shareable URL. Capture email as an *optional, time-bound* action: “alert me if *this mix* crosses [threshold] on the next material move.”
+
+**What actually converts:** a reason the number is *not* a one-shot toy. Biggest lever is **personal, event-driven follow-up**, not a prettier gauge. After the score, show one sensitivity line (“if BTC utility drops 10, you go 42→61”) and one CTA: email when *my* exposure crosses *my* line, or when the next published regime change moves it. That matches the site’s refresh cadence (material moves, not a live tick). Without that, people play, leave, never return.
+
+**Do not paywall v1.** Mixing a first paid tier into a lead-gen novelty muddies both: you starve the list and sell a calculator nobody trusts yet. **Do seed monetization as the same object as the CTA:** saved mix + personal threshold. Smallest paid version later: email (then webhook) when that saved mix crosses the user’s threshold, or moves N points on a published refresh. Cheap monitoring SKU, not a $99 one-shot like OppScan. No API, no history charts, until alerts have paying users.
+
+Assumption: list quality beats volume while this is still one page.
+
+## Round 1 -- claude
+
+1. Soft-gate, not hard-gate. This audience smells a marketing gate instantly and bounces. Show the score live as they adjust dropdowns (it's "just arithmetic" — hiding it insults them), but gate the persistent/valuable parts behind email: a saved link to re-check your score as the macro number moves, a one-line "what changes this" explainer, or a shareable card. The gate should be on *follow-through utility*, not on the number itself.
+
+2. Movement is what brings people back — a static score is a novelty. The macro score already refreshes on material moves; the calculator needs to notify people when *their specific* score crosses a regime boundary. Without a callback loop (email or otherwise), this is a one-time toy. That notification hook is also literally the mailing-list value prop, so build it first — it's the difference between "check my number once" and "give this thing my email because it'll tell me something later."
+
+3. Yes, seed monetization now, but keep it thin — don't build a second product. Smallest viable version: free = live calculator + one-time email capture for "notify me if my score changes." Paid = personalized threshold alerts (you set the trigger points, not the site's fixed regimes) + score history. That's a natural upsell from the same mechanic in #2, not a separate feature — the free tier proves demand for alerts, the paid tier removes the "only on our regime boundaries" limit. Don't build tracked history or an API yet; those are v2 once alert open/click rates validate willingness to pay. Mixing monetization in is fine here specifically because the paid tier is the *same underlying mechanic* (threshold-triggered notification) as the lead-gen hook, just personalized — it's not bolting on an unrelated revenue feature.
+
+## Round 1 -- codex
+
+Don’t gate the number. For this audience, gating deterministic arithmetic signals extraction before value and undermines trust. Show the score instantly, disclose the formula at a useful level, then capture email for ongoing utility: “Alert me when my exposure changes by 10 points or crosses 70.” A social-sharing angle is secondary; many users won’t publicly share portfolio exposure.
+
+The biggest conversion driver is making the result time-dependent, not merely personalized. Clearly show: “Your score is 68 today; it would become 81 if macro stress enters the next regime.” Then offer monitoring of that exact portfolio. This turns a novelty calculation into a recurring risk instrument and makes the email request logically necessary.
+
+Yes, seed monetization now—but don’t paywall the initial result or introduce payment in the first interaction. Use a clean ladder:
+
+- Free: instant score, one saved allocation, alerts at major regime changes.
+- Paid MVP: multiple saved allocations, custom score thresholds, exposure history, and alerts on every material update.
+
+Skip the API initially; it adds support and reliability expectations before demand is proven.
+
+The paid tier should be positioned as monitoring, not “better analysis.” The underlying arithmetic remains transparent and free; users pay for persistence, customization, and timely delivery.
+
+Load-bearing assumption: published stress and utility scores change often enough to make personalized monitoring valuable. If updates are very infrequent, scenario alerts and stress-test simulations must supply the recurring value instead.
+
+## Round 1 -- devin
+
+**Q1: Don't gate the number.** Sophisticated finance/crypto visitors will recognize the gate immediately as a lead-gen toll on arithmetic. They bounce. Better: show the score ungated, then gate the *interpretation layer* — "Your score is 67. [What does this mean for your specific mix in the current Stress Escalating regime?]" That second step requires genuine synthesis, which justifies the email ask. Alternatively: shareable score card ("My liquidity exposure: 67/100") with email as the upgrade path to alerts. Either respects their intelligence; a raw-number gate doesn't.
+
+**Q2: Make the score feel perishable, not static.** The single biggest conversion driver is forward-looking scenario framing: "If macro stress moves to Market Dysfunction, your score shifts from 67 → 82." That transforms the calculator from a curiosity into a live instrument with ongoing relevance — and makes email the natural ask: *you need to know when this changes for you specifically*. Without that, it's a toy people play with once.
+
+**Q3: Seed monetization now, smallest viable version only.** The right paid tier is **personal threshold alerts** — "Notify me when my exposure score crosses [X]." This is:
+- Clearly differentiated from the free mailing list (general regime emails vs. personalized triggers)
+- Directly downstream of the calculator, not a wall around it
+- Low build cost; ~$5–10/mo defensible price point for this audience
+
+The muddying risk is real only if paid features *restrict* the free calculator. Keep the calculator fully ungated; paid just extends personal relevance. Clean separation.
+
+## Round 2 -- grok-build
+
+I was wrong on monetization. Ungating the number still stands.
+
+Claude's soft gate and Devin's gated "what this means" are a toll on a sentence. This audience already sees the macro score and the utilities. Show the formula, the live number, and one perishable line: "68 today; 81 if stress enters the next regime." Codex is right that this line has to be public. A share card is optional, not the capture — people will not post a book.
+
+What converts is that line plus a callback on their mix. A static gauge is a toy.
+
+Last round I made the free CTA "email me when I cross my line," then said don't charge. That spends the only thing worth selling and forces history or an API as the paid tier. Split one mechanic by control, not by hiding arithmetic.
+
+Free: save one mix; email when the next published regime move changes that score. Paid, after that alert exists, not on the first click: they set the threshold. Same mix, same delivery path.
+
+Codex and Claude put history and multi-book monitoring in the first paid version. That is a second product. Devin's custom-threshold alert is the right seed; do not hide the scenario line behind the form that sells it.
+
+POSITION: Ungate score, formula, and next-regime delta; free email is one saved mix on regime moves; the only paid seed is a user-set threshold on that mix, offered after the free alert, with no history or API.
+status: revise
+
+## Round 2 -- claude
+
+Consensus has converged: don't hard-gate the raw number, capture email on forward-looking/personalized follow-through, seed monetization thin via the same mechanic. My prior position holds; the field agrees on all three questions with only phrasing differences.
+
+One rebuttal: grok-build's "do not paywall v1" reads as if it conflicts with claude/codex/devin on Q3, but it doesn't — it's arguing against gating the *free calculator's* number behind payment, which nobody else proposed either. All four of us land on: free ungated calculator, paid = personalized threshold alerts/history, same mechanic not a bolt-on. That's real agreement, not surface-level — a builder following any of the four answers ships the same v1: ungated instant score, scenario/delta framing ("your score becomes X if regime shifts"), email capture on "notify me," and a thin paid tier of personal thresholds/saved allocations rather than an API or history dashboard. Devin's price point ($5-10/mo) and codex's "one saved allocation free" are minor implementation details, not divergent actions.
+
+I'm not changing my answer from round 1.
+
+POSITION: Ungate the score itself, gate/monetize the forward-looking follow-through — email capture for "alert me when my specific mix crosses a threshold or the regime shifts," with the same mechanic later becoming the paid tier (custom thresholds, multiple saved allocations, history) rather than a separate paywalled feature.
+status: approved
+
+## Round 2 -- codex
+
+My position holds: reveal the score immediately and ask for email only where email is functionally required—monitoring that saved exposure.
+
+The panel strongly agrees on the core mechanism: turn a one-time result into a perishable, event-driven instrument. The highest-converting moment should show a concrete scenario—“68 now; 81 in the next stress regime”—followed by “Alert me when mine changes.” Share cards are secondary because portfolio exposure is not inherently social.
+
+I disagree with Devin’s suggestion to gate personalized interpretation. Unless that interpretation adds genuinely new analysis, it is still a disguised toll on the calculator and creates the same trust problem as gating the number.
+
+I would also tighten Claude’s and my prior paid MVP. Do not initially build history, multiple portfolios, or alerts on every update. First offer one saved mix with a free default-boundary alert and measure activation, alert frequency, opens, and return visits. The smallest paid experiment is custom thresholds for that same saved mix, ideally as a preorder or upgrade prompt before building billing. If published scores move too rarely, even personalized alerts will not support a subscription; scenario stress tests must then provide recurring value.
+
+Grok is right to delay a full paid tier, but wrong to frame monetization as entirely later: instrument demand now without cluttering the calculator.
+
+POSITION: Ungate the transparent score, convert through one saved-mix alert, and test paid custom thresholds before building a broader monitoring tier.
+status: revise
+
+## Round 2 -- devin
+
+**Round 2: My previous position holds on the core, but I'm revising one piece.**
+
+All four positions converge on the same ungating logic: showing a hard gate on deterministic arithmetic insults the audience, and conversion should happen on *ongoing utility*, not on hiding a number. No meaningful disagreement there.
+
+The one place I'm revising: I said gate the *interpretation layer* ("what does 67 mean in this regime?"). Grok and codex are right that this is weaker than gating the *alert*. A sophisticated user who gives an email just for a text explanation has low ongoing engagement — they read it once and disengage. An alert is fundamentally different: it's a commitment that the site will do something useful *later*, which is exactly what makes email feel like an exchange rather than a toll. The interpretation text is free, and it should be — it's what makes the score feel non-trivial before the email ask.
+
+The refined sequence: ungated calculator → scenario framing makes the score feel perishable ("Your score shifts 67→82 if macro stress escalates one regime") → that perishability makes the email ask logical: *"Alert me when this changes for my mix."* Claude's "soft gate on persistent value" framing is fine but undersells this; grok and codex name it more precisely.
+
+On monetization: still seed it now, still threshold alerts as the paid SKU. No meaningful divergence across the panel on this.
+
+POSITION: Show the score instantly with scenario-shift framing, gate email on personalized alerts (not the number or interpretation text), and seed paid as custom threshold triggers vs. fixed regime boundaries.
+status: revise
+
+
+## Synthesis (claude)
+
+FINAL ANSWER: Don't gate the number — show the calculator's score instantly and transparently (this audience treats gating "just arithmetic" as a trust-breaking marketing toll). Convert to email on forward-looking, perishable value instead: pair the instant score with a scenario delta ("68 now, 81 if macro stress escalates one regime") and ask for email specifically to alert on that saved mix. Seed monetization now but keep it the same mechanic, not a bolt-on: free tier is one saved mix with alerts on the site's fixed regime boundaries; the paid seed is letting the user set their own custom threshold on that saved mix — no history, no API, no multi-portfolio tracking until alert engagement validates demand.
+
+CONSENSUS: full
+DISSENT: Minor sequencing disagreement only — codex/grok-build want the custom-threshold paid tier explicitly tested/instrumented before building billing, while claude/devin are comfortable committing to it as the paid SKU outright; no disagreement on what the smallest paid version actually is.
+
+codex
+The repository has a deliberate tension: its standing rule says the presentation layer “computes nothing,” while the approved candidate explicitly requires local deterministic arithmetic. I’m treating the owner-approved calculator as a narrow documented exception—using only the already-cached event, adding no upstream fetch or pipeline logic—and I’m tightening the formula and fallback behavior so csr won’t need to invent product semantics.
+codex
+```spec
+# Personal Liquidity Exposure Calculator
+
+## Overview
+
+Add a fully ungated, deterministic Personal Liquidity Exposure calculator to the existing single-page LiquidityWatch experience. It uses the already-loaded financial-stress event, requires no additional data fetches or LLM calls, exposes its methodology, shows a next-regime scenario, and converts through the existing mailing-list flow.
+
+## Goals
+
+- Calculate a transparent 0–100 exposure score from portfolio allocations, leverage, `event.final_score`, and BTC/ETH/XRP `utility_score` values.
+- Reuse the existing six LiquidityWatch regime bands.
+- Show the current result and a next-macro-regime scenario without an email gate.
+- Save one mix locally and attribute alert signups with `list: "liquiditywatch-exposure-calculator"`.
+- Preserve the existing general mailing-list signup and verification flow.
+- Provide deterministic unit coverage for scoring, boundaries, missing data, and scenario calculations.
+
+## Non-Goals
+
+- Paid plans, billing, custom thresholds, multiple portfolios, allocation history, sharing, or a public API.
+- New upstream fields, endpoints, data fetching, LLM calls, schedulers, or scoring-pipeline code.
+- Implementing downstream personalized email dispatch, which remains owned by the external API producer.
+- Treating the calculator as investment advice or a market-price prediction.
+- Persisting portfolio allocations on the server; the mix is saved only in the visitor’s browser.
+
+## Existing Files
+
+- `public/render.js` contains build-free helpers shared by browser rendering and server-side rendering.
+- `public/index.html` contains the page markup, styles, client refresh, mailing-list signup, and verification logic.
+- `server.js` fetches and briefly caches the current event for SSR.
+- `docs/MODEL.md` defines the headline score and its six regimes.
+- `CLAUDE.md` defines the presentation-only repository boundary.
+- `README.md` describes the deployed product and repository.
+- `docs/API-CONTRACT.md` documents the existing event and mailing-list contracts.
+
+## Shared Constraints
+
+- Keep the implementation within the no-build, framework-free CommonJS/browser pattern already used by `public/render.js`.
+- The calculator is a narrow presentation-layer exception to the repository’s “compute nothing” rule: it may derive a user-facing score from published fields but must not alter, replace, or present itself as the upstream Financial Stress Score.
+- Use the event already obtained by the existing page load. Calculator changes must never initiate another financial-stress API request.
+- Treat every event field as optional. Missing or malformed asset utility data must degrade neutrally rather than disable the calculator or imply maximum risk.
+- Normalize v1 and legacy utility-score scales through the existing `scaledUnitPercent` convention.
+- Use the existing `GAUGE_BANDS` and `gaugeBand` helpers rather than creating a second regime table.
+- Clamp all source and derived values to their documented ranges and round only the final displayed scores.
+- Portfolio percentages must be finite non-negative values totaling exactly 100 before a result is shown.
+- Preserve both existing mailing-list forms and the `/verifyEmailCode` flow.
+- Do not add dependencies, a build step, analytics, cookies, or server-side portfolio storage.
+- Keep all calculator copy explicit that it is an informational stress sensitivity, not expected performance, loss probability, or investment advice.
+- Keep the complete change below 30 files and 3,200 changed lines.
+
+## Phase 1 - Deterministic Calculator Model
+
+<!-- runner:model=codex:gpt-5.6-sol -->
+<!-- pilot:touches=public/render.js -->
+<!-- pilot:touches=test/exposure-calculator.test.js -->
+<!-- pilot:touches=docs/MODEL.md -->
+<!-- pilot:touches=CLAUDE.md -->
+<!-- runner:read=docs/API-CONTRACT.md -->
+<!-- runner:read=docs/MODEL.md -->
+<!-- runner:verify=npm install && node --check server.js && node --check public/render.js -->
+
+### Requirements
+
+- Add pure, DOM-free calculator helpers to `public/render.js` and export them through `RENDER_EXPORTS` for both Node tests and browser use.
+- Represent the portfolio as four percentages: `cashEquities`, `btc`, `eth`, and `xrp`, plus a Boolean `leveraged`.
+- Validate that all four percentages are finite, between 0 and 100 inclusive, and total exactly 100.
+- Derive the current score using this public formula:
+  - Let `M` be `event.final_score`, clamped to 0–100.
+  - Let each asset utility `U` be its case-insensitive BTC/ETH/XRP `utility_score`, normalized to 0–100 with existing schema-version behavior and clamped to 0–100.
+  - A missing or invalid utility uses `U = 100 - M`, making that asset’s stress equal to `M` and therefore neutral relative to the macro component.
+  - Cash/equities stress is `M`.
+  - Each crypto asset’s stress is `0.70 × M + 0.30 × (100 - U)`.
+  - Base exposure is the allocation-weighted mean of the four bucket stresses.
+  - If leveraged, multiply base exposure by `1.15`.
+  - Clamp to 0–100 and round once to the nearest integer.
+- Return structured output containing validation state, normalized inputs, current score, current band, and enough component values to render the methodology without recomputing it elsewhere.
+- Derive the next-regime scenario by replacing only `M` with the next integer regime entry point: 16, 36, 56, 76, or 91. Keep allocation, leverage, and current utility values unchanged.
+- If macro stress is already in Market Dysfunction, return no next-regime scenario. Otherwise return the scenario macro score, recalculated personal score, band, and signed delta.
+- Ensure personal-score banding uses `gaugeBand`, including its existing boundary behavior.
+- Add focused Node built-in tests covering:
+  - all-cash/equities exposure;
+  - crypto-weighted exposure;
+  - leveraged clamping;
+  - legacy and v1 utility scales;
+  - case-insensitive asset lookup;
+  - missing and malformed utility fallbacks;
+  - invalid allocations and totals;
+  - all six personal-score bands and boundary values;
+  - next-regime values and the highest-regime terminal case;
+  - non-mutation of the supplied event and mix.
+- Update `docs/MODEL.md` with a clearly separated “Personal Liquidity Exposure” presentation derivative that documents the exact formula, scenario assumption, interpretation, and distinction from the upstream headline model.
+- Update `CLAUDE.md` to record this calculator as the sole narrow deterministic presentation derivative currently allowed, while retaining the prohibition on pipeline scoring, ingestion, and LLM calls.
+- Run `node --test test/exposure-calculator.test.js` during implementation in addition to the configured verification command.
+
+### Acceptance Criteria
+
+- The same input event and portfolio always produce the same integer result.
+- Tests independently demonstrate the documented arithmetic and fallback behavior.
+- No helper accesses DOM, network, storage, environment, or time APIs.
+- No API contract or upstream score semantics are changed.
+- The methodology in `docs/MODEL.md` exactly matches the tested implementation.
+- `node --test test/exposure-calculator.test.js` passes.
+- The configured verification command passes.
+
+## Phase 2 - Ungated Calculator and Alert Signup Experience
+
+<!-- runner:model=codex:gpt-5.6-sol -->
+<!-- pilot:touches=public/index.html -->
+<!-- pilot:touches=README.md -->
+<!-- runner:read=public/render.js -->
+<!-- runner:read=docs/API-CONTRACT.md -->
+<!-- runner:verify=npm install && node --check server.js && node --check public/render.js -->
+
+### Requirements
+
+- Add a responsive “Personal Liquidity Exposure” section to `public/index.html` after the headline stress score and before the analytical detail sections.
+- Provide accessible labeled dropdowns for cash/equities, BTC, ETH, and XRP allocations using 10-point increments from 0% through 100%, plus a leverage/margin checkbox.
+- Supply a valid, clearly labeled default mix totaling 100%.
+- Recalculate immediately when an input changes using the most recently loaded event retained by `renderEventIntoPage`; do not fetch inside calculator handlers.
+- Keep the form usable before event data arrives, but show a calm unavailable/loading state until a numeric `final_score` exists.
+- Show an inline validation message and suppress results when allocations do not total 100%.
+- For valid inputs, show:
+  - the ungated 0–100 score;
+  - its shared LiquidityWatch band and color;
+  - a concise interpretation that avoids return or loss claims;
+  - the next-regime personal score and signed delta, or an “already highest macro regime” message;
+  - a visible expandable methodology explanation containing the exact formula and current component assumptions.
+- Clearly distinguish the personal derivative from the upstream U.S. Financial Stress Score.
+- Include an informational/not-investment-advice disclaimer adjacent to the result.
+- Add a dedicated optional alert signup within the calculator section:
+  - save the validated mix to a versioned `localStorage` key before submission;
+  - restore and validate that mix on later visits, ignoring corrupt or obsolete data safely;
+  - POST to the existing `/api/mailing-list/signup` endpoint with `{ email, list: "liquiditywatch-exposure-calculator" }`;
+  - preserve the existing verification-code behavior and avoid sharing mutable pending-email state between the calculator and general signup forms;
+  - clearly state that the mix is stored in this browser and that signup covers material LiquidityWatch updates; do not falsely claim that the current API stores the allocation or already performs server-side personalized dispatch.
+- Keep the existing general `financial_stress_alerts` signup independently functional.
+- Factor the duplicated signup/verification behavior into a small reusable client-side function if necessary, without adding a library or changing endpoint payloads.
+- Make status messages accessible with an appropriate live region, preserve keyboard operation, and provide visible focus states for all new controls.
+- Ensure the layout remains readable at the existing 480px mobile breakpoint.
+- Update `README.md` to mention the ungated calculator, its transparent derivative nature, local saved mix, scenario result, and attributed optional alert signup.
+- Do not modify `server.js`; its existing cached SSR event and existing browser refresh remain the only event-loading paths.
+
+### Acceptance Criteria
+
+- A visitor can calculate and inspect the score, band, scenario, and full formula without supplying an email.
+- Changing any allocation or leverage control updates the result without a network request.
+- Invalid totals never produce a misleading score.
+- The calculator reacts correctly when the client refresh replaces the current event.
+- Missing asset triggers still yield a deterministic neutral-fallback result.
+- A valid mix survives reload through local storage; malformed stored data does not break the page.
+- Calculator signup sends the exact calculator list attribution, while general signup retains `financial_stress_alerts`.
+- Both signup paths handle success, verification-required responses, API errors, and retryable failures independently.
+- Existing score, subscore, classification, briefing, and mailing-list rendering continue to work.
+- The page remains usable on mobile and by keyboard.
+- No new endpoint, dependency, financial-stress fetch, monetization surface, or email gate is introduced.
+- The configured verification command passes.
+```
+
+---DRAFT-STATUS---
+status: ok
+reason: The calculator can be delivered as a two-phase, six-file presentation-layer change well within the file and line limits.
+tokens used
+44,940
+e3d_provider_usage={"provider":"codex","tokens":44940}

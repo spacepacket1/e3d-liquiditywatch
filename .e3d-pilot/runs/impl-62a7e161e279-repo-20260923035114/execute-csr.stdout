@@ -1,0 +1,110 @@
+ok: spec file exists: /var/folders/vn/jrwn6x0579v_26grcpvwp_200000gn/T//e3d-pilot.impl-62a7e161e279-repo-20260923035114.RPppUp/.e3d-pilot/runs/impl-62a7e161e279-repo-20260923035114/spec-final.md
+ok: root directory exists: /var/folders/vn/jrwn6x0579v_26grcpvwp_200000gn/T/e3d-pilot.impl-62a7e161e279-repo-20260923035114.RPppUp
+ok: --from phase is numeric: 1
+ok: --to phase is numeric: 2
+ok: selected 2 phase(s) for target all
+ok: verification shell found on PATH: bash
+ok: Codex binary found on PATH: codex
+result: ok
+== Phase 1: Deterministic Calculator Model ==
+Provider: codex
+Model: gpt-5.6-sol
+Status: starting Codex phase run.
+Phase 1 is implemented.
+
+- Added deterministic calculator helpers, persistence parsing, browser exports, scenario logic, and neutral fallbacks.
+- Added 16 focused tests covering arithmetic, boundaries, malformed inputs, storage, and non-mutation.
+- Updated model documentation, repository rules, and the required handoff.
+- Syntax checks and all 16 tests pass.
+- `npm install` could not complete because registry DNS was unavailable; no dependency or lockfile changes were made.
+Provider tokens: 78212 (ceiling: 300000)
+Verification: running npm install && node --check server.js && node --check public/render.js && node --test test/exposure-calculator.test.js
+
+added 68 packages, and audited 69 packages in 649ms
+
+15 packages are looking for funding
+  run `npm fund` for details
+
+3 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+✔ classic-script loading exposes the calculator through globalThis (1.294167ms)
+✔ exports the calculator constants and normalizes a new five-field mix (0.308208ms)
+✔ rejects invalid allocation shapes, values, and totals without coercion (0.077834ms)
+✔ all-cash exposure clamps the macro score and rounds only the displayed result (0.202292ms)
+✔ crypto-weighted exposure follows the documented formula (0.089292ms)
+✔ leverage is applied before clamp and final rounding (0.070834ms)
+✔ uses existing legacy and v1 utility scaling with schema_version (0.066666ms)
+✔ asset lookup is case-insensitive and the first matching entry wins (0.064667ms)
+✔ missing and malformed utilities use the neutral fallback without coercion (0.086ms)
+✔ malformed asset_triggers never throw and fall back neutrally (0.119083ms)
+✔ personal scores use all six existing bands and retain first-match boundaries (0.385625ms)
+✔ next-regime inputs are derived from the band objects and overlapping boundaries (0.08375ms)
+✔ scenario reuses current fallback utilities instead of recomputing them (0.053792ms)
+✔ missing scores fail safely while invalid mix takes precedence (0.055875ms)
+✔ calculation does not mutate the event or mix (0.06375ms)
+✔ stored mixes round-trip and invalid storage is rejected without throwing (0.154917ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.546208
+Status: phase 1 completed.
+== Phase 2: Ungated Calculator and Alert Signup Experience ==
+Provider: codex
+Model: gpt-5.6-sol
+Status: starting Codex phase run.
+Phase 2 implemented.
+
+- Added responsive ungated calculator, methodology, scenarios, persistence, and optional alerts.
+- Preserved SSR anchors and existing general signup behavior.
+- Added README documentation and 8 focused UI/runtime tests.
+- Exact verification command passed, plus all additional tests and syntax checks.
+- Handoff written to [phase-2.md](/var/folders/vn/jrwn6x0579v_26grcpvwp_200000gn/T/e3d-pilot.impl-62a7e161e279-repo-20260923035114.RPppUp/.codex-spec-runner/summaries/phase-2.md).
+
+Interactive browser smoke testing was unavailable because browser tooling and local port binding were blocked.
+Provider tokens: 101110 (ceiling: 300000)
+Verification: running npm install && node --check server.js && node --check public/render.js && node --test test/exposure-calculator.test.js && node -e "const fs=require('fs');const html=fs.readFileSync('public/index.html','utf8');const anchors=['<div class=\"score-panel\" id=\"score-panel\">\n      <div class=\"empty-state\">Loading&hellip;</div>\n    </div>','<section id=\"subscore-breakdown\" hidden>','<div class=\"subscore-panel\" id=\"subscore-panel\"></div>','<section id=\"classification-body\" hidden>','<div class=\"classification-panel\" id=\"classification-panel\"></div>','<section id=\"newsletter-body\" hidden>','<div class=\"newsletter-panel\" id=\"newsletter-panel\"></div>'];if(anchors.some(s=>!html.includes(s))){console.error('SSR anchor missing');process.exit(1);}"
+
+up to date, audited 69 packages in 275ms
+
+15 packages are looking for funding
+  run `npm fund` for details
+
+3 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+✔ classic-script loading exposes the calculator through globalThis (1.294208ms)
+✔ exports the calculator constants and normalizes a new five-field mix (0.306875ms)
+✔ rejects invalid allocation shapes, values, and totals without coercion (0.077209ms)
+✔ all-cash exposure clamps the macro score and rounds only the displayed result (0.210708ms)
+✔ crypto-weighted exposure follows the documented formula (0.08925ms)
+✔ leverage is applied before clamp and final rounding (0.068959ms)
+✔ uses existing legacy and v1 utility scaling with schema_version (0.063875ms)
+✔ asset lookup is case-insensitive and the first matching entry wins (0.058375ms)
+✔ missing and malformed utilities use the neutral fallback without coercion (0.085333ms)
+✔ malformed asset_triggers never throw and fall back neutrally (0.114792ms)
+✔ personal scores use all six existing bands and retain first-match boundaries (0.392333ms)
+✔ next-regime inputs are derived from the band objects and overlapping boundaries (0.099083ms)
+✔ scenario reuses current fallback utilities instead of recomputing them (0.059666ms)
+✔ missing scores fail safely while invalid mix takes precedence (0.063917ms)
+✔ calculation does not mutate the event or mix (0.069375ms)
+✔ stored mixes round-trip and invalid storage is rejected without throwing (0.1755ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.6025
+Status: phase 2 completed.

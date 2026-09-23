@@ -1,0 +1,52 @@
+{
+  "verify": [
+    "npm install && node --check server.js && node --check public/render.js"
+  ],
+  "protected_paths": [
+    ".env*"
+  ],
+  "research_topics": "LiquidityWatch growth: mailing-list signup conversion, top-of-funnel engagement mechanics for a passive score-display product, personalization of the macro Stress Score, eventual first paid tier",
+  "pr": {
+    "base_branch": "main",
+    "draft": true,
+    "labels": [
+      "e3d-pilot"
+    ],
+    "backend": "auto"
+  },
+  "providers": {
+    "discover": [
+      "grok-build",
+      "claude",
+      "codex",
+      "devin"
+    ],
+    "ideate": [
+      "grok-build",
+      "claude",
+      "codex",
+      "devin"
+    ],
+    "draft": "codex",
+    "negotiate": [
+      "grok-build",
+      "claude",
+      "codex",
+      "devin",
+      "local"
+    ],
+    "review": [
+      "grok-build",
+      "claude",
+      "codex",
+      "devin"
+    ],
+    "execute": "csr"
+  },
+  "max_diff_files": 30,
+  "max_diff_lines": 3200,
+  "candidate_scoring": {
+    "provider": "grok-build",
+    "workers": 3
+  }
+}
