@@ -33,6 +33,15 @@ Every evaluation is stored, but only ones judged *materially different* from the
 
 Fully automated end to end: a material evaluation publishes the moment the three-stage process completes, with no human-approval gate in the path. Not investment advice — an AI research and synthesis process, provided for informational purposes only.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Hero gauge — U.S. Financial Stress Score](docs/screenshots/01-hero-gauge.png) | ![Trigger metrics and asset confirmation](docs/screenshots/02-trigger-metrics.png) |
+| ![Personal Liquidity Exposure calculator](docs/screenshots/03-personal-exposure.png) | ![Sub-Engine Breakdown](docs/screenshots/04-sub-engine-breakdown.png) |
+
+<img src="docs/screenshots/05-mobile-hero.png" alt="Mobile view of the hero gauge" width="300" />
+
 ## This repo
 
 Just the static front end: an Express server (`server.js`) serving `public/` — the gauge, score panel, deterministic personal-exposure calculator, and mailing-list signups — which reads live data from the `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`). The scoring pipeline itself lives elsewhere in the E3D stack.
