@@ -27,13 +27,15 @@ Every evaluation is stored, but only ones judged *materially different* from the
 - **A live gauge, 0–100** across six regimes — from *Accommodative* through *Mild Watchfulness*, *Contained Tension*, *Restrictive Policy*, the *Policy-Forcing Danger Zone*, up to *Market Dysfunction*.
 - **Trigger metrics tracked cycle-over-cycle**: Controlled Break Risk (odds current stress breaks into an uncontrolled crisis), Liquidity Response Probability (odds the Fed/Treasury actually supplies new support soon), and Phase (tightening → liquidity response beginning → full backstop underway).
 - **Asset triggers for BTC, ETH, and XRP** — a utility score for how much each is actually functioning as settlement/bridge liquidity right now, not just price momentum.
+- **An ungated Personal Liquidity Exposure calculator** — a transparent presentation derivative of the published U.S. Financial Stress Score, using a mix saved only in your browser. It shows the current personal stress sensitivity, its full formula, and a next-macro-regime scenario without requiring an email.
+- **Optional calculator alerts** — signup is attributed to the exposure calculator and covers material LiquidityWatch updates; portfolio allocations are not sent to or stored by the signup API.
 - **A mailing list** that emails you only on material moves — see [`/about`](https://liquiditywatch.e3d.ai/about.html) for the full methodology and scale.
 
 Fully automated end to end: a material evaluation publishes the moment the three-stage process completes, with no human-approval gate in the path. Not investment advice — an AI research and synthesis process, provided for informational purposes only.
 
 ## This repo
 
-Just the static front end: an Express server (`server.js`) serving `public/` — the gauge, the score panel, and the mailing-list signup — which reads live data from the `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`). The scoring pipeline itself lives elsewhere in the E3D stack.
+Just the static front end: an Express server (`server.js`) serving `public/` — the gauge, score panel, deterministic personal-exposure calculator, and mailing-list signups — which reads live data from the `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`). The scoring pipeline itself lives elsewhere in the E3D stack.
 
 ```
 npm install

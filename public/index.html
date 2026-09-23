@@ -274,6 +274,80 @@
     opacity: 0.8;
   }
 
+  .exposure-shell {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .allocation-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .allocation-field label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .allocation-field select {
+    width: 100%;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font: inherit;
+  }
+  .leverage-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 14px;
+    cursor: pointer;
+  }
+  .leverage-control input { width: 18px; height: 18px; accent-color: var(--gold); }
+  .allocation-field select:focus-visible,
+  .leverage-control input:focus-visible,
+  #personal-exposure .signup-form input:focus-visible,
+  #personal-exposure .signup-form button:focus-visible,
+  #personal-methodology summary:focus-visible {
+    outline: 3px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  .exposure-validation { min-height: 1.5em; margin-top: 10px; color: var(--red); font-size: 13px; }
+  .personal-result { margin-top: 8px; }
+  .personal-result .gauge-wrap { max-width: 280px; }
+  .personal-result .gauge-score-number { font-size: 64px; }
+  .personal-interpretation { max-width: 620px; margin: 12px auto 0; color: var(--text-dim); font-size: 14px; }
+  .scenario-panel {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: rgba(77, 214, 232, 0.06);
+    border: 1px solid rgba(77, 214, 232, 0.2);
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .personal-methodology { margin-top: 16px; }
+  .personal-methodology summary { color: var(--cyan); cursor: pointer; font-weight: 600; }
+  .methodology-body { margin-top: 10px; color: var(--text-dim); font-size: 13px; }
+  .formula {
+    overflow-x: auto;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .component-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; }
+  .component-grid div { min-width: 0; }
+  .calculator-alerts { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--panel-border); }
+  .calculator-alerts h3 { margin: 0; font-size: 17px; }
+  .calculator-alerts p { margin: 5px 0 0; color: var(--text-dim); font-size: 13px; }
+
   .signup-panel {
     background: var(--panel);
     border: 1px solid var(--panel-border);
@@ -329,6 +403,9 @@
     .signup-panel { padding: 18px 16px; }
     .signup-form { flex-direction: column; }
     .signup-form input, .signup-form button { width: 100%; }
+    .exposure-shell { padding: 16px 14px 18px; }
+    .allocation-grid, .component-grid { grid-template-columns: 1fr; }
+    .personal-result .gauge-score-number { font-size: 54px; }
   }
 </style>
 </head>
@@ -349,6 +426,47 @@
       <div class="empty-state">Loading&hellip;</div>
     </div>
     <div class="disclaimer">Not investment advice. This score reflects an AI-driven research and synthesis process; it is provided for informational purposes only.</div>
+  </section>
+
+  <section id="personal-exposure">
+    <h2>Personal Liquidity Exposure</h2>
+    <div class="subhead">An ungated, transparent stress-sensitivity derivative of the upstream U.S. Financial Stress Score.</div>
+    <div class="exposure-shell">
+      <div class="allocation-grid">
+        <div class="allocation-field">
+          <label for="exposure-cash-equities">Cash / equities allocation</label>
+          <select id="exposure-cash-equities"><option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option></select>
+        </div>
+        <div class="allocation-field">
+          <label for="exposure-btc">BTC allocation</label>
+          <select id="exposure-btc"><option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option></select>
+        </div>
+        <div class="allocation-field">
+          <label for="exposure-eth">ETH allocation</label>
+          <select id="exposure-eth"><option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option></select>
+        </div>
+        <div class="allocation-field">
+          <label for="exposure-xrp">XRP allocation</label>
+          <select id="exposure-xrp"><option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option></select>
+        </div>
+      </div>
+      <label class="leverage-control" for="exposure-leveraged"><input type="checkbox" id="exposure-leveraged"> Uses leverage or margin</label>
+      <div class="exposure-validation" id="exposure-validation" aria-live="polite"></div>
+      <div class="personal-result" id="personal-result" aria-live="polite">
+        <div class="empty-state">Waiting for the current U.S. Financial Stress Score&hellip;</div>
+      </div>
+      <div class="disclaimer">Informational stress sensitivity only; this personal derivative is not the upstream U.S. Financial Stress Score and is not investment advice.</div>
+
+      <div class="calculator-alerts">
+        <h3>Optional LiquidityWatch alerts</h3>
+        <p>Your valid mix is stored only in this browser. Signup covers material LiquidityWatch updates; the allocation is not sent with signup.</p>
+        <form class="signup-form" id="exposure-signup-form">
+          <input type="email" id="exposure-signup-email" aria-label="Email for LiquidityWatch calculator alerts" placeholder="you@example.com" required autocomplete="email">
+          <button type="submit" id="exposure-signup-submit">Subscribe</button>
+        </form>
+        <div class="signup-status" id="exposure-signup-status" aria-live="polite"></div>
+      </div>
+    </div>
   </section>
 
   <section id="subscore-breakdown" hidden>
@@ -387,6 +505,144 @@
 <script src="/render.js"></script>
 <script>
 const API_BASE = 'https://e3d.ai';
+let retainedExposureEvent = null;
+
+const exposureControls = {
+  cashEquities: document.getElementById('exposure-cash-equities'),
+  btc: document.getElementById('exposure-btc'),
+  eth: document.getElementById('exposure-eth'),
+  xrp: document.getElementById('exposure-xrp'),
+  leveraged: document.getElementById('exposure-leveraged'),
+};
+
+function allocationFromControl(control) {
+  const raw = control.value;
+  const isOwnOption = Array.from(control.options).some((option) => option.value === raw);
+  return isOwnOption ? parseInt(raw, 10) : NaN;
+}
+
+function currentExposureMix() {
+  return {
+    cashEquities: allocationFromControl(exposureControls.cashEquities),
+    btc: allocationFromControl(exposureControls.btc),
+    eth: allocationFromControl(exposureControls.eth),
+    xrp: allocationFromControl(exposureControls.xrp),
+    leveraged: exposureControls.leveraged.checked,
+  };
+}
+
+function exposureMixFitsControls(mix) {
+  return ['cashEquities', 'btc', 'eth', 'xrp'].every((key) => (
+    Array.from(exposureControls[key].options).some((option) => option.value === String(mix[key]))
+  ));
+}
+
+function saveExposureMix(mix) {
+  const serialized = globalThis.RENDER_EXPORTS.serializeExposureMix(mix);
+  if (typeof serialized !== 'string') return;
+  try {
+    localStorage.setItem(globalThis.RENDER_EXPORTS.EXPOSURE_MIX_STORAGE_KEY, serialized);
+  } catch (_error) {
+    // Local storage may be unavailable; the in-memory controls still work.
+  }
+}
+
+function componentValue(value) {
+  return globalThis.RENDER_EXPORTS.escapeHtml(String(value));
+}
+
+function utilityComponent(label, utility) {
+  return `${label} utility: ${componentValue(utility.score)}${utility.fallback ? ' (neutral fallback)' : ''}`;
+}
+
+function renderPersonalExposureResult(result) {
+  const resultPanel = document.getElementById('personal-result');
+  const scoreColor = globalThis.RENDER_EXPORTS.escapeHtml(result.current.band.color);
+  const bandLabel = globalThis.RENDER_EXPORTS.escapeHtml(result.current.band.label);
+  const scenarioHtml = result.scenario
+    ? `<div class="scenario-panel"><strong>Next macro regime scenario:</strong> personal score ${componentValue(result.scenario.score)}/100 at macro score ${componentValue(result.scenario.macroScore)} (${result.scenario.delta > 0 ? '+' : ''}${componentValue(result.scenario.delta)}).</div>`
+    : '<div class="scenario-panel"><strong>Next macro regime scenario:</strong> already highest macro regime.</div>';
+  const components = result.components;
+
+  resultPanel.innerHTML = `
+    <div class="gauge-section">
+      <div class="gauge-wrap">${globalThis.RENDER_EXPORTS.buildGaugeSvg(result.current.score)}</div>
+      <div class="gauge-score-wrap">
+        <span class="gauge-score-number" style="color:${scoreColor}">${componentValue(result.current.score)}</span><span class="gauge-score-suffix">/100</span>
+        <div class="gauge-band-label" style="color:${scoreColor}">${bandLabel}</div>
+      </div>
+      <div class="personal-interpretation">This value describes how sensitive the selected mix is to the current published liquidity-stress setting. Higher values indicate greater stress sensitivity.</div>
+    </div>
+    ${scenarioHtml}
+    <details class="personal-methodology" id="personal-methodology">
+      <summary>Methodology and returned components</summary>
+      <div class="methodology-body">
+        <p>This presentation derivative uses the documented formula:</p>
+        <div class="formula">cashStress = M
+cryptoStress(U) = 0.70 × M + 0.30 × (100 − U)
+baseExposure = (cashEquities × cashStress
+              + btc × btcStress
+              + eth × ethStress
+              + xrp × xrpStress) / 100
+preClampScore = baseExposure × (leveraged ? 1.15 : 1)
+personalScore = Math.round(clamp(preClampScore, 0, 100))</div>
+        <div class="component-grid">
+          <div>Macro score: ${componentValue(components.macroScore)}</div>
+          <div>Leverage factor: ${componentValue(components.leverageFactor)}</div>
+          <div>${utilityComponent('BTC', components.utilities.btc)}</div>
+          <div>${utilityComponent('ETH', components.utilities.eth)}</div>
+          <div>${utilityComponent('XRP', components.utilities.xrp)}</div>
+          <div>Cash / equities stress: ${componentValue(components.stresses.cashEquities)}</div>
+          <div>BTC stress: ${componentValue(components.stresses.btc)}</div>
+          <div>ETH stress: ${componentValue(components.stresses.eth)}</div>
+          <div>XRP stress: ${componentValue(components.stresses.xrp)}</div>
+          <div>Base exposure: ${componentValue(components.baseExposure)}</div>
+          <div>Pre-clamp score: ${componentValue(components.preClampScore)}</div>
+        </div>
+      </div>
+    </details>`;
+}
+
+function recalculatePersonalExposure() {
+  const mix = currentExposureMix();
+  const normalized = globalThis.RENDER_EXPORTS.normalizeExposureMix(mix);
+  const validation = document.getElementById('exposure-validation');
+  const resultPanel = document.getElementById('personal-result');
+  const hasScore = !!retainedExposureEvent
+    && typeof retainedExposureEvent.final_score === 'number'
+    && Number.isFinite(retainedExposureEvent.final_score);
+
+  validation.textContent = normalized.ok ? '' : 'Allocations must total exactly 100%.';
+  if (normalized.ok) saveExposureMix(mix);
+
+  const result = globalThis.RENDER_EXPORTS.computePersonalExposure(retainedExposureEvent, mix);
+  if (!result.ok) {
+    resultPanel.innerHTML = hasScore
+      ? ''
+      : '<div class="empty-state">Waiting for the current U.S. Financial Stress Score&hellip;</div>';
+    return;
+  }
+  renderPersonalExposureResult(result);
+}
+
+function initializeExposureControls() {
+  let initialMix = globalThis.RENDER_EXPORTS.DEFAULT_EXPOSURE_MIX;
+  try {
+    const raw = localStorage.getItem(globalThis.RENDER_EXPORTS.EXPOSURE_MIX_STORAGE_KEY);
+    const storedMix = globalThis.RENDER_EXPORTS.parseStoredExposureMix(raw);
+    if (storedMix && exposureMixFitsControls(storedMix)) initialMix = storedMix;
+  } catch (_error) {
+    // Storage failures leave the documented default mix selected.
+  }
+
+  ['cashEquities', 'btc', 'eth', 'xrp'].forEach((key) => {
+    exposureControls[key].value = String(initialMix[key]);
+    exposureControls[key].addEventListener('change', recalculatePersonalExposure);
+  });
+  exposureControls.leveraged.checked = initialMix.leveraged === true;
+  exposureControls.leveraged.addEventListener('change', recalculatePersonalExposure);
+  recalculatePersonalExposure();
+}
 
 // Renders one event into the page. Shared shape with server.js's SSR pass
 // (both call the same render.js functions) - this is what keeps the page
@@ -394,6 +650,8 @@ const API_BASE = 'https://e3d.ai';
 // if SSR didn't have data yet (e.g. the very first deploy, or the live API
 // being briefly unreachable when a request came in).
 function renderEventIntoPage(event) {
+  retainedExposureEvent = event;
+  recalculatePersonalExposure();
   const panel = document.getElementById('score-panel');
   if (!event) {
     panel.innerHTML = EMPTY_STATE_HTML;
@@ -454,6 +712,44 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     emailInput.disabled = true;
   } catch (err) {
     setStatus('Something went wrong. Please try again.', 'error');
+    submitBtn.disabled = false;
+  }
+});
+
+initializeExposureControls();
+
+function setExposureSignupStatus(message, kind) {
+  const el = document.getElementById('exposure-signup-status');
+  el.textContent = message;
+  el.className = 'signup-status' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('exposure-signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('exposure-signup-email');
+  const submitBtn = document.getElementById('exposure-signup-submit');
+  const email = emailInput.value.trim();
+  if (!email) return;
+  saveExposureMix(currentExposureMix());
+  submitBtn.disabled = true;
+  setExposureSignupStatus('Submitting…', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, list: globalThis.RENDER_EXPORTS.EXPOSURE_ALERT_LIST }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setExposureSignupStatus(data.message || 'Something went wrong. Please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+    setExposureSignupStatus(data.message || 'Check your email to confirm your subscription.', 'ok');
+    submitBtn.textContent = 'Subscribed';
+    emailInput.disabled = true;
+  } catch (err) {
+    setExposureSignupStatus('Something went wrong. Please try again.', 'error');
     submitBtn.disabled = false;
   }
 });

@@ -112,6 +112,186 @@ function scaledUnitPercent(rawValue, schemaVersion) {
   return Math.round(unit * 100);
 }
 
+const DEFAULT_EXPOSURE_MIX = {
+  cashEquities: 70,
+  btc: 10,
+  eth: 10,
+  xrp: 10,
+  leveraged: false,
+};
+const EXPOSURE_MIX_STORAGE_KEY = 'liquiditywatch.personalExposureMix.v1';
+const EXPOSURE_ALERT_LIST = 'liquiditywatch-exposure-calculator';
+
+function normalizeExposureMix(mix) {
+  if (!mix || typeof mix !== 'object' || Array.isArray(mix)) {
+    return { ok: false, reason: 'invalid-mix' };
+  }
+
+  const percentages = [mix.cashEquities, mix.btc, mix.eth, mix.xrp];
+  const validPercentages = percentages.every((value) => (
+    typeof value === 'number'
+    && Number.isFinite(value)
+    && value >= 0
+    && value <= 100
+  ));
+  if (!validPercentages || percentages.reduce((sum, value) => sum + value, 0) !== 100) {
+    return { ok: false, reason: 'invalid-mix' };
+  }
+
+  return {
+    ok: true,
+    mix: {
+      cashEquities: mix.cashEquities,
+      btc: mix.btc,
+      eth: mix.eth,
+      xrp: mix.xrp,
+      leveraged: mix.leveraged === true,
+    },
+  };
+}
+
+function serializeExposureMix(mix) {
+  const normalized = normalizeExposureMix(mix);
+  if (!normalized.ok) return null;
+  return JSON.stringify({ v: 1, ...normalized.mix });
+}
+
+function parseStoredExposureMix(raw) {
+  let stored = raw;
+  try {
+    if (typeof raw === 'string') stored = JSON.parse(raw);
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return null;
+
+    const requiredFields = ['v', 'cashEquities', 'btc', 'eth', 'xrp', 'leveraged'];
+    if (!requiredFields.every((field) => Object.prototype.hasOwnProperty.call(stored, field))) return null;
+    if (stored.v !== 1) return null;
+
+    const normalized = normalizeExposureMix(stored);
+    return normalized.ok ? normalized.mix : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function personalExposureAtMacro(macroScore, mix, utilities) {
+  const stresses = {
+    cashEquities: macroScore,
+    btc: 0.70 * macroScore + 0.30 * (100 - utilities.btc.score),
+    eth: 0.70 * macroScore + 0.30 * (100 - utilities.eth.score),
+    xrp: 0.70 * macroScore + 0.30 * (100 - utilities.xrp.score),
+  };
+  const baseExposure = (
+    mix.cashEquities * stresses.cashEquities
+    + mix.btc * stresses.btc
+    + mix.eth * stresses.eth
+    + mix.xrp * stresses.xrp
+  ) / 100;
+  const leverageFactor = mix.leveraged === true ? 1.15 : 1;
+  const preClampScore = baseExposure * leverageFactor;
+  const score = Math.round(clampPercent(preClampScore));
+
+  return { score, stresses, baseExposure, leverageFactor, preClampScore };
+}
+
+function computePersonalExposure(event, mix) {
+  const normalized = normalizeExposureMix(mix);
+  const invalidResult = (reason) => ({
+    ok: false,
+    reason,
+    current: null,
+    scenario: null,
+    components: null,
+  });
+  if (!normalized.ok) return invalidResult('invalid-mix');
+  if (!event || typeof event !== 'object' || Array.isArray(event)
+      || typeof event.final_score !== 'number' || !Number.isFinite(event.final_score)) {
+    return invalidResult('missing-score');
+  }
+
+  const macroScore = clampPercent(event.final_score);
+  const fallbackUtility = 100 - macroScore;
+  const triggers = Array.isArray(event.asset_triggers) ? event.asset_triggers : [];
+  const utilities = {};
+
+  ['btc', 'eth', 'xrp'].forEach((assetKey) => {
+    let rawUtility;
+    let found = false;
+    for (const entry of triggers) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      try {
+        if (String(entry.asset).toUpperCase() === assetKey.toUpperCase()) {
+          rawUtility = entry.utility_score;
+          found = true;
+          break;
+        }
+      } catch (_error) {
+        // A malformed entry is ignored just like any other unusable trigger.
+      }
+    }
+
+    const scaled = found && typeof rawUtility === 'number' && Number.isFinite(rawUtility)
+      ? scaledUnitPercent(rawUtility, event.schema_version)
+      : null;
+    const fallback = !Number.isFinite(scaled);
+    utilities[assetKey] = {
+      score: fallback ? fallbackUtility : clampPercent(scaled),
+      fallback,
+    };
+  });
+
+  const currentCalculation = personalExposureAtMacro(macroScore, normalized.mix, utilities);
+  const current = {
+    score: currentCalculation.score,
+    band: gaugeBand(currentCalculation.score),
+  };
+
+  let scenario = null;
+  const currentMacroBand = gaugeBand(macroScore);
+  const currentBandIndex = GAUGE_BANDS.indexOf(currentMacroBand);
+  const nextBand = GAUGE_BANDS[currentBandIndex + 1];
+  if (nextBand) {
+    let scenarioMacroScore = null;
+    if (gaugeBand(nextBand.min) === nextBand) {
+      scenarioMacroScore = nextBand.min;
+    } else if (gaugeBand(currentMacroBand.max + 1) === nextBand) {
+      scenarioMacroScore = currentMacroBand.max + 1;
+    }
+
+    if (scenarioMacroScore !== null) {
+      const scenarioCalculation = personalExposureAtMacro(
+        scenarioMacroScore,
+        normalized.mix,
+        utilities,
+      );
+      scenario = {
+        macroScore: scenarioMacroScore,
+        score: scenarioCalculation.score,
+        band: gaugeBand(scenarioCalculation.score),
+        delta: scenarioCalculation.score - currentCalculation.score,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    reason: null,
+    current,
+    scenario,
+    components: {
+      macroScore,
+      utilities,
+      stresses: currentCalculation.stresses,
+      baseExposure: currentCalculation.baseExposure,
+      leverageFactor: currentCalculation.leverageFactor,
+      preClampScore: currentCalculation.preClampScore,
+    },
+  };
+}
+
 // velocity/acceleration are already in the same unit as the value they
 // describe (see docs/API-CONTRACT.md); render them as a short trend note
 // rather than raw numbers, which are meaningless without the scale.
@@ -325,6 +505,13 @@ const RENDER_EXPORTS = {
   PHASE_LABELS,
   phaseBadgeHtml,
   scaledUnitPercent,
+  DEFAULT_EXPOSURE_MIX,
+  EXPOSURE_MIX_STORAGE_KEY,
+  EXPOSURE_ALERT_LIST,
+  normalizeExposureMix,
+  serializeExposureMix,
+  parseStoredExposureMix,
+  computePersonalExposure,
   trendNoteHtml,
   metricDeltaHtml,
   triggerMetricsHtml,
@@ -350,4 +537,6 @@ const RENDER_EXPORTS = {
 // same logic, zero duplication either way.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = RENDER_EXPORTS;
+} else if (typeof globalThis !== 'undefined') {
+  globalThis.RENDER_EXPORTS = RENDER_EXPORTS;
 }

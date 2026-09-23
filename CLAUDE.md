@@ -14,9 +14,12 @@ lives **elsewhere in the E3D stack**. It is not in this repo and must not be add
 
 ## Rules
 
-1. **Compute nothing.** This repo renders a model it is handed. No scoring, no data
-   ingestion, no LLM calls. If a change needs new computed data, it needs a new field in
-   the API contract, not new code here.
+1. **Compute nothing upstream.** This repo renders a model it is handed. The sole narrow
+   exception is the deterministic Personal Liquidity Exposure presentation derivative
+   documented in `docs/MODEL.md`; it derives an informational visitor-specific score only
+   from published event fields and a local allocation. No pipeline scoring, data
+   ingestion, or LLM calls belong here. Any other computed model data requires a new API
+   contract field, not new presentation code.
 2. **The integration boundary is `docs/API-CONTRACT.md`** — the JSON contract with the
    `e3d.ai` API (`/api/financial-stress-monitor`, `/api/mailing-list/signup`,
    `/verifyEmailCode`). No shared code with the pipeline; the contract is the only joint.
