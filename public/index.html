@@ -464,10 +464,6 @@
           <input type="email" id="exposure-signup-email" aria-label="Email for LiquidityWatch calculator alerts" placeholder="you@example.com" required autocomplete="email">
           <button type="submit" id="exposure-signup-submit">Subscribe</button>
         </form>
-        <form class="signup-form" id="exposure-verify-form" hidden>
-          <input type="text" id="exposure-verify-code" aria-label="Calculator alert verification code" placeholder="6-digit code from your email" required inputmode="numeric" autocomplete="one-time-code">
-          <button type="submit" id="exposure-verify-submit">Verify</button>
-        </form>
         <div class="signup-status" id="exposure-signup-status" aria-live="polite"></div>
       </div>
     </div>
@@ -497,10 +493,6 @@
       <form class="signup-form" id="signup-form">
         <input type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
         <button type="submit" id="signup-submit">Subscribe</button>
-      </form>
-      <form class="signup-form" id="verify-form" hidden>
-        <input type="text" id="verify-code" placeholder="6-digit code from your email" required inputmode="numeric" autocomplete="one-time-code">
-        <button type="submit" id="verify-submit">Verify</button>
       </form>
       <div class="signup-status" id="signup-status"></div>
     </div>
@@ -689,104 +681,79 @@ async function loadStressScore() {
   }
 }
 
-function setupSignupFlow(config) {
-  const signupForm = document.getElementById(config.signupFormId);
-  const emailInput = document.getElementById(config.emailInputId);
-  const signupSubmit = document.getElementById(config.signupSubmitId);
-  const verifyForm = document.getElementById(config.verifyFormId);
-  const codeInput = document.getElementById(config.codeInputId);
-  const verifySubmit = document.getElementById(config.verifySubmitId);
-  const status = document.getElementById(config.statusId);
-  let pendingEmail = '';
-
-  function setStatus(message, kind) {
-    status.textContent = message;
-    status.className = 'signup-status' + (kind ? ' ' + kind : '');
-  }
-
-  signupForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const email = emailInput.value.trim();
-    if (!email) return;
-    if (config.beforeSignup) config.beforeSignup();
-    signupSubmit.disabled = true;
-    setStatus('Submitting…', '');
-    try {
-      const response = await fetch(`${API_BASE}/api/mailing-list/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, list: config.list }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        setStatus(data.message || 'Something went wrong. Please try again.', 'error');
-        signupSubmit.disabled = false;
-        return;
-      }
-      pendingEmail = email;
-      if (data.needsVerification) {
-        setStatus('Check your email for a verification code.', 'ok');
-        verifyForm.hidden = false;
-        emailInput.disabled = true;
-      } else {
-        setStatus('You’re subscribed.', 'ok');
-        signupSubmit.textContent = 'Subscribed';
-      }
-    } catch (_error) {
-      setStatus('Something went wrong. Please try again.', 'error');
-      signupSubmit.disabled = false;
-    }
-  });
-
-  verifyForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const code = codeInput.value.trim();
-    if (!code || !pendingEmail) return;
-    verifySubmit.disabled = true;
-    setStatus('Verifying…', '');
-    try {
-      const response = await fetch(`${API_BASE}/verifyEmailCode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: pendingEmail, code }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        setStatus(data.message || 'Invalid or expired code.', 'error');
-        verifySubmit.disabled = false;
-        return;
-      }
-      setStatus('You’re subscribed and verified.', 'ok');
-      verifyForm.hidden = true;
-    } catch (_error) {
-      setStatus('Something went wrong. Please try again.', 'error');
-      verifySubmit.disabled = false;
-    }
-  });
+function setStatus(message, kind) {
+  const el = document.getElementById('signup-status');
+  el.textContent = message;
+  el.className = 'signup-status' + (kind ? ' ' + kind : '');
 }
 
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('signup-email');
+  const submitBtn = document.getElementById('signup-submit');
+  const email = emailInput.value.trim();
+  if (!email) return;
+  submitBtn.disabled = true;
+  setStatus('Submitting…', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, list: 'financial_stress_alerts' }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setStatus(data.message || 'Something went wrong. Please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+    setStatus(data.message || 'Check your email to confirm your subscription.', 'ok');
+    submitBtn.textContent = 'Subscribed';
+    emailInput.disabled = true;
+  } catch (err) {
+    setStatus('Something went wrong. Please try again.', 'error');
+    submitBtn.disabled = false;
+  }
+});
+
 initializeExposureControls();
-setupSignupFlow({
-  signupFormId: 'signup-form',
-  emailInputId: 'signup-email',
-  signupSubmitId: 'signup-submit',
-  verifyFormId: 'verify-form',
-  codeInputId: 'verify-code',
-  verifySubmitId: 'verify-submit',
-  statusId: 'signup-status',
-  list: 'financial_stress_alerts',
+
+function setExposureSignupStatus(message, kind) {
+  const el = document.getElementById('exposure-signup-status');
+  el.textContent = message;
+  el.className = 'signup-status' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('exposure-signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('exposure-signup-email');
+  const submitBtn = document.getElementById('exposure-signup-submit');
+  const email = emailInput.value.trim();
+  if (!email) return;
+  saveExposureMix(currentExposureMix());
+  submitBtn.disabled = true;
+  setExposureSignupStatus('Submitting…', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, list: globalThis.RENDER_EXPORTS.EXPOSURE_ALERT_LIST }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setExposureSignupStatus(data.message || 'Something went wrong. Please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+    setExposureSignupStatus(data.message || 'Check your email to confirm your subscription.', 'ok');
+    submitBtn.textContent = 'Subscribed';
+    emailInput.disabled = true;
+  } catch (err) {
+    setExposureSignupStatus('Something went wrong. Please try again.', 'error');
+    submitBtn.disabled = false;
+  }
 });
-setupSignupFlow({
-  signupFormId: 'exposure-signup-form',
-  emailInputId: 'exposure-signup-email',
-  signupSubmitId: 'exposure-signup-submit',
-  verifyFormId: 'exposure-verify-form',
-  codeInputId: 'exposure-verify-code',
-  verifySubmitId: 'exposure-verify-submit',
-  statusId: 'exposure-signup-status',
-  list: globalThis.RENDER_EXPORTS.EXPOSURE_ALERT_LIST,
-  beforeSignup: () => saveExposureMix(currentExposureMix()),
-});
+
 loadStressScore();
 </script>
 
