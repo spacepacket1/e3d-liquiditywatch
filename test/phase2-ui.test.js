@@ -14,6 +14,7 @@ function pageHarness(storedValue = null) {
     'exposure-leveraged', 'exposure-validation', 'personal-result',
     'score-panel', 'subscore-panel', 'subscore-breakdown', 'classification-panel',
     'classification-body', 'newsletter-panel', 'newsletter-body',
+    'score-history', 'history-chart-panel',
     'signup-form', 'signup-email', 'signup-submit', 'verify-form', 'verify-code',
     'verify-submit', 'signup-status', 'exposure-signup-form', 'exposure-signup-email',
     'exposure-signup-submit', 'exposure-verify-form', 'exposure-verify-code',

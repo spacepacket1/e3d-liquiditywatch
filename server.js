@@ -7,12 +7,14 @@ const {
   buildScorePanelHtml,
   subscoresHtml,
   classificationBlocksHtml,
+  historyChartHtml,
 } = require('./public/render.js');
 
 const app = express();
 const PORT = process.env.PORT || 3008;
 const API_BASE = process.env.API_BASE || 'https://e3d.ai';
 const CACHE_TTL_MS = 60 * 1000;
+const HISTORY_LIMIT = 180;
 
 // Server-side render the current event into index.html before serving it,
 // so a fetcher that doesn't execute JavaScript (crawlers, link previews,
@@ -45,7 +47,31 @@ async function getEvent() {
   return cachedEvent;
 }
 
-function renderIndexHtml(event) {
+// docs/API-CONTRACT.md #History - separate endpoint from the current event,
+// so it's a separate cached fetch. Same reasoning as getEvent(): keep
+// whatever was last cached on a fetch failure rather than blanking the
+// chart, and don't advance `cachedAt` so the next request retries.
+let cachedHistory = null;
+let historyCachedAt = 0;
+
+async function getHistory() {
+  const now = Date.now();
+  if (now - historyCachedAt < CACHE_TTL_MS) {
+    return cachedHistory;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/financial-stress-monitor/history?limit=${HISTORY_LIMIT}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`upstream responded ${res.status}`);
+    const data = await res.json();
+    cachedHistory = Array.isArray(data) ? data : null;
+    historyCachedAt = now;
+  } catch (err) {
+    console.error('[ssr] failed to fetch financial-stress-monitor/history:', err.message);
+  }
+  return cachedHistory;
+}
+
+function renderIndexHtml(event, history) {
   const template = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
   if (!event) return template; // nothing to inject - client-side fetch takes over exactly as before
 
@@ -68,6 +94,13 @@ function renderIndexHtml(event) {
       .replace('<div class="classification-panel" id="classification-panel"></div>', `<div class="classification-panel" id="classification-panel">${blocksHtml}</div>`);
   }
 
+  const historyHtml = historyChartHtml(history);
+  if (historyHtml) {
+    html = html
+      .replace('<section id="score-history" hidden>', '<section id="score-history">')
+      .replace('<div class="history-chart-panel" id="history-chart-panel"></div>', `<div class="history-chart-panel" id="history-chart-panel">${historyHtml}</div>`);
+  }
+
   // newsletter_body_html is contract-documented trusted HTML, rendered
   // as-is - matches the client's existing `.innerHTML = ...` handling.
   if (event.newsletter_body_html) {
@@ -82,8 +115,8 @@ function renderIndexHtml(event) {
 app.get(['/', '/index.html'], async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const event = await getEvent();
-    res.type('html').send(renderIndexHtml(event));
+    const [event, history] = await Promise.all([getEvent(), getHistory()]);
+    res.type('html').send(renderIndexHtml(event, history));
   } catch (err) {
     // renderIndexHtml only throws on a disk read failure - getEvent already
     // swallows its own errors. Fall back to the plain static file so a bug

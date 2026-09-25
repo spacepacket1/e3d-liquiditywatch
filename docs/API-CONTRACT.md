@@ -23,6 +23,7 @@ LiquidityWatch. Change it deliberately and version it.
 | Method | URL | Purpose |
 |---|---|---|
 | `GET` | `https://e3d.ai/api/financial-stress-monitor` | Latest published evaluation → `{ event }` |
+| `GET` | `https://e3d.ai/api/financial-stress-monitor/history?limit=N` | Newest-first array of past trimmed `event`s (headline + sub-scores + trigger metrics only) — confirmed live 2026-09-24, powers the score-over-time chart. See [§History](#history) |
 | `POST` | `https://e3d.ai/api/mailing-list/signup` | `{ email, list }` → `{ success, message }` |
 
 **Mailing-list signup is double opt-in, account-free.** `/api/mailing-list/signup` writes a
@@ -33,12 +34,6 @@ here means "signup accepted, confirmation email sent," not "subscribed." (Previo
 flowed through account creation + `/verifyEmailCode`; retired 2026-09-12 — that path
 required a full e3d.ai account for a mailing-list-only action and its `OPTIONS` preflight
 was never wired up, so verification always failed with a CORS error.)
-
-**Proposed additions:**
-
-| Method | URL | Purpose |
-|---|---|---|
-| `GET` | `…/financial-stress-monitor/history?limit=N` | Array of past `event`s (headline + sub-scores + trigger metrics only) for sparklines — see [Model open item 5 / §History](#history) |
 
 ---
 
@@ -65,7 +60,17 @@ can branch. Absent ⇒ treat as `"0.0"` (pre-contract; today's payload).
 {
   "event": {
     "final_score": 62,                    // int 0–100
-    "final_score_before": 58,             // int 0–100, previous published
+    "final_score_before": 58,             // int 0–100, the last *published* (materially
+                                           // different) evaluation's score — NOT
+                                           // necessarily the immediately preceding cycle.
+                                           // See §History: `/history` returns every
+                                           // stored cycle regardless of publish status,
+                                           // so its second entry can legitimately differ
+                                           // from final_score_before. Confirmed against
+                                           // the pipeline source (spacepacket's
+                                           // repository.js: getLatestPublishedEvent()
+                                           // filters `WHERE reviewStatus = 'published'`;
+                                           // getLatestEvent() does not).
 
     "final_regime": "restrictive_policy", // free string; UI replaces [_-] with space
     "phase": { "value": 1 },              // 1 | 2 | 3
@@ -275,8 +280,25 @@ needs the latest.
   // …
 ]
 ```
-Flat scalars only (no `change_reason`, `evidence`, graph). Powers sparklines under each
-score. Cache-friendly; the front end fetches it once per load.
+Flat scalars only (no `change_reason`, `evidence`, graph). Powers the "Score Over Time"
+chart on the front end (`historyChartHtml` in `render.js`), which plots `final_score`
+only — the other flat scalars are carried for future sparklines but not yet rendered.
+Cache-friendly; the front end fetches it once per load. Individual array entries follow
+the same optionality/resilience rules as `event` (§Scale, §resilience contract above):
+a malformed or score-less entry is dropped rather than breaking the chart. Fields other
+than `final_score` may be `null` where the underlying evaluation predates that field
+(observed on real payloads, e.g. `schema_version: ""`, `phase: null`, `subscores: {}`).
+
+**`/history` is every stored cycle, not every *published* one — this can make its
+second entry's `final_score` differ from `event.final_score_before`.** `event` (above)
+reflects only the latest *published* evaluation, and `final_score_before` is the score
+of the previous *published* one, which can be several cycles back if nothing in between
+was judged materially different. `/history` has no such filter — confirmed on real
+payloads 2026-09-25: `event.final_score_before` was `72`, but `/history`'s
+second-newest entry (the immediately preceding daily cycle) was `74`; `72` didn't
+reappear until 13 cycles back. Don't treat `history[1].final_score` as
+`final_score_before` — they answer different questions ("what did every cycle read" vs.
+"what did the last *published* reading say").
 
 ---
 

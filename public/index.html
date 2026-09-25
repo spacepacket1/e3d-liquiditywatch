@@ -201,6 +201,15 @@
   }
   .falsifiable-claim-action { margin-top: 4px; color: var(--text); }
 
+  .history-chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px 20px 12px;
+  }
+  .history-chart-wrap { width: 100%; }
+  .history-chart-svg { width: 100%; height: auto; display: block; }
+
   .subscore-panel, .classification-panel {
     background: var(--panel);
     border: 1px solid var(--panel-border);
@@ -428,6 +437,12 @@
     <div class="disclaimer">Not investment advice. This score reflects an AI-driven research and synthesis process; it is provided for informational purposes only.</div>
   </section>
 
+  <section id="score-history" hidden>
+    <h2>Score Over Time</h2>
+    <div class="subhead">The published score across recent evaluations.</div>
+    <div class="history-chart-panel" id="history-chart-panel"></div>
+  </section>
+
   <section id="personal-exposure">
     <h2>Personal Liquidity Exposure</h2>
     <div class="subhead">An ungated, transparent stress-sensitivity derivative of the upstream U.S. Financial Stress Score.</div>
@@ -500,7 +515,7 @@
 
 </div>
 
-<footer>liquiditywatch.e3d.ai &mdash; a FutCo intelligence product, powered by E3D.</footer>
+<footer>liquiditywatch.e3d.ai &mdash; a FutCo intelligence product, powered by E3D. &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/support.html">Support</a></footer>
 
 <script src="/render.js"></script>
 <script>
@@ -681,6 +696,22 @@ async function loadStressScore() {
   }
 }
 
+// Separate endpoint from the current event (docs/API-CONTRACT.md #History) -
+// its own fetch, and failure here just leaves the section hidden rather
+// than touching the score panel above.
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API_BASE}/api/financial-stress-monitor/history?limit=180`, { cache: 'no-store' });
+    const data = await res.json();
+    const chartHtml = historyChartHtml(data);
+    document.getElementById('history-chart-panel').innerHTML = chartHtml;
+    document.getElementById('score-history').hidden = !chartHtml;
+  } catch (err) {
+    // Leave the section hidden (its default state) rather than showing a
+    // broken chart panel.
+  }
+}
+
 function setStatus(message, kind) {
   const el = document.getElementById('signup-status');
   el.textContent = message;
@@ -755,6 +786,7 @@ document.getElementById('exposure-signup-form').addEventListener('submit', async
 });
 
 loadStressScore();
+loadHistory();
 </script>
 
 </body>

@@ -456,6 +456,90 @@ function classificationBlocksHtml(blocks) {
   ].join('');
 }
 
+// docs/API-CONTRACT.md #History: `GET …/financial-stress-monitor/history?limit=N`
+// returns a newest-first array of trimmed events. Only `final_score` is
+// plotted today; entries missing a numeric final_score are dropped rather
+// than breaking the chart (same resilience contract as everything else
+// here). Colors are hardcoded hex (not var(--...)) to match buildGaugeSvg's
+// convention above - this SVG string is also SSR'd into raw HTML before any
+// stylesheet applies.
+function formatHistoryDateLabel(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function buildHistoryChartSvg(history) {
+  const points = (Array.isArray(history) ? history : [])
+    .filter((e) => e && typeof e === 'object' && typeof e.final_score === 'number' && Number.isFinite(e.final_score))
+    .slice()
+    .reverse(); // newest-first on the wire; chart reads left-to-right chronologically
+  if (points.length < 2) return '';
+
+  const width = 640;
+  const height = 200;
+  const padLeft = 34;
+  const padRight = 10;
+  const padTop = 12;
+  const padBottom = 24;
+  const plotW = width - padLeft - padRight;
+  const plotH = height - padTop - padBottom;
+
+  const xAt = (i) => padLeft + (i / (points.length - 1)) * plotW;
+  const yAt = (v) => padTop + (1 - Math.max(0, Math.min(100, v)) / 100) * plotH;
+
+  const bands = GAUGE_BANDS.map((b) => {
+    const y1 = yAt(b.max);
+    const y2 = yAt(b.min);
+    return `<rect x="${padLeft}" y="${y1.toFixed(2)}" width="${plotW}" height="${(y2 - y1).toFixed(2)}" fill="${b.color}" opacity="0.08"/>`;
+  }).join('');
+
+  const gridlines = [0, 25, 50, 75, 100].map((v) => {
+    const y = yAt(v);
+    return `<line x1="${padLeft}" y1="${y.toFixed(2)}" x2="${width - padRight}" y2="${y.toFixed(2)}" stroke="#1c2c4a" stroke-width="1"/>`
+      + `<text class="gauge-tick" x="${(padLeft - 6).toFixed(2)}" y="${y.toFixed(2)}" text-anchor="end" dominant-baseline="middle">${v}</text>`;
+  }).join('');
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(2)} ${yAt(p.final_score).toFixed(2)}`).join(' ');
+
+  const dots = points.map((p, i) => {
+    const x = xAt(i);
+    const y = yAt(p.final_score);
+    const color = gaugeBandColor(p.final_score);
+    const dateLabel = formatHistoryDateLabel(p.created_at);
+    const title = `${dateLabel ? dateLabel + ': ' : ''}${Math.round(p.final_score)}`;
+    return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="3.5" fill="${color}" stroke="#0d1930" stroke-width="1.5"><title>${escapeHtml(title)}</title></circle>`;
+  }).join('');
+
+  const labelCount = Math.min(5, points.length);
+  const xLabels = Array.from({ length: labelCount }, (_, i) => {
+    const idx = labelCount === 1 ? 0 : Math.round((i / (labelCount - 1)) * (points.length - 1));
+    const label = formatHistoryDateLabel(points[idx].created_at);
+    if (!label) return '';
+    return `<text class="gauge-tick" x="${xAt(idx).toFixed(2)}" y="${height - 6}" text-anchor="middle">${escapeHtml(label)}</text>`;
+  }).join('');
+
+  return `
+    <svg class="history-chart-svg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="U.S. Financial Stress Score over time">
+      ${bands}
+      ${gridlines}
+      <path d="${linePath}" fill="none" stroke="#4dd6e8" stroke-width="2"/>
+      ${dots}
+      ${xLabels}
+    </svg>
+  `;
+}
+
+// history[]: docs/API-CONTRACT.md #History shape. Returns '' (section stays
+// hidden, same pattern as subscoresHtml/classificationBlocksHtml) when
+// there's no history endpoint, an empty response, or fewer than 2 usable
+// points - a single point isn't a trend line.
+function historyChartHtml(history) {
+  const svg = buildHistoryChartSvg(history);
+  if (!svg) return '';
+  return `<div class="history-chart-wrap">${svg}</div>`;
+}
+
 const EMPTY_STATE_HTML = '<div class="empty-state">No stress evaluation has been published yet. The monitoring pipeline runs on a schedule &mdash; check back soon.</div>';
 const ERROR_STATE_HTML = '<div class="empty-state">Unable to load the current score right now.</div>';
 
@@ -526,6 +610,9 @@ const RENDER_EXPORTS = {
   SUBSCORE_LABELS,
   subscoresHtml,
   classificationBlocksHtml,
+  formatHistoryDateLabel,
+  buildHistoryChartSvg,
+  historyChartHtml,
   buildScorePanelHtml,
   EMPTY_STATE_HTML,
   ERROR_STATE_HTML,
