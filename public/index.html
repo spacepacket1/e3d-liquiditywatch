@@ -57,6 +57,19 @@
     text-transform: uppercase;
     color: var(--gold);
   }
+  .app-store-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .app-store-badge:hover { background: rgba(77, 214, 232, 0.12); }
   h1, h2 { margin: 0 0 6px; }
   h2 { font-size: 22px; display: flex; align-items: center; gap: 8px; }
   .info-icon {
@@ -427,6 +440,7 @@
 <div class="wrap">
 
   <div class="brand">LiquidityWatch</div>
+  <a class="app-store-badge" href="https://apps.apple.com/us/app/e3d-mobile/id6794961807" target="_blank" rel="noopener">Get E3D Mobile on the App Store</a>
 
   <section id="stress-score">
     <h2>U.S. Financial Stress Score <a class="info-icon" href="/about.html" aria-label="What does this score mean?">i</a></h2>
