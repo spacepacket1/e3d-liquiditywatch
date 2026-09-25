@@ -40,6 +40,16 @@ footer alongside `/support`/`/terms`). Superseded `PRIVACY_POLICY_DRAFT_TEMPLATE
 this site — that file is kept as a record of the process and reusable if another
 E3D/FutCo product needs the same starting structure.
 
+**Caught and fixed, 2026-09-25:** the Google Analytics claim above was published *before*
+GA was actually installed — checked directly against the live site's HTML and response
+headers, found nothing (no `gtag`, no `googletagmanager.com`, no analytics of any kind
+anywhere). The policy was stating something not yet true. Fixed by actually installing
+GA4 (`G-Z9DQB5W05Y`) in all 5 pages' `<head>` (`index.html`, `about.html`,
+`support.html`, `privacy.html`, `terms.html`), not by softening the claim — verified live
+on all 5 production URLs afterward. Worth remembering: a privacy policy's accuracy needs
+re-checking against the actual site any time something it describes changes, not just
+written once and trusted.
+
 ## Published terms (owner-approved, 2026-09-25)
 
 Drafted after the owner made three explicit, deliberately conservative choices: no
