@@ -54,7 +54,9 @@ function pageHarness(storedValue = null) {
       return new Promise(() => {});
     },
   };
-  const inlineScript = html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
+  // The page carries a Google Analytics inline script ahead of the app script.
+  const inlineScript = [...html.matchAll(/<script>\n([\s\S]*?)<\/script>/g)]
+    .map((m) => m[1]).find((code) => code.includes('RENDER_EXPORTS'));
   vm.runInNewContext(inlineScript, context);
   return { context, elements, storage, requests };
 }
@@ -93,10 +95,12 @@ test('calculator uses shared exports, retained events, and guarded local persist
 test('signup flows retain independent forms and required list attribution', () => {
   assert.match(html, /list: 'financial_stress_alerts'/);
   assert.match(html, /list: globalThis\.RENDER_EXPORTS\.EXPOSURE_ALERT_LIST/);
-  assert.match(html, /body: JSON\.stringify\(\{ email, list: config\.list \}\)/);
-  assert.match(html, /body: JSON\.stringify\(\{ username: pendingEmail, code \}\)/);
-  assert.match(html, /statusId: 'signup-status'/);
-  assert.match(html, /statusId: 'exposure-signup-status'/);
+  // Double opt-in: the signup POST is the only call; no verify-code follow-up.
+  assert.match(html, /body: JSON\.stringify\(\{ email, list: 'financial_stress_alerts' \}\)/);
+  assert.match(html, /body: JSON\.stringify\(\{ email, list: globalThis\.RENDER_EXPORTS\.EXPOSURE_ALERT_LIST \}\)/);
+  assert.doesNotMatch(html, /verifyEmailCode/);
+  assert.match(html, /getElementById\('signup-status'\)/);
+  assert.match(html, /getElementById\('exposure-signup-status'\)/);
 });
 
 test('calculator recomputes from retained and null events without overwriting a valid saved mix', () => {
@@ -134,7 +138,7 @@ test('only valid on-grid stored mixes initialize the allocation controls', () =>
   assert.equal(pageHarness('{broken').elements['exposure-cash-equities'].value, '70');
 });
 
-test('calculator signup remains available for an invalid mix and verifies its own pending email', async () => {
+test('calculator signup remains available for an invalid mix and sends its own list attribution', async () => {
   const { context, elements, requests } = pageHarness();
   elements['exposure-cash-equities'].value = '60';
   elements['exposure-cash-equities'].listeners.change();
@@ -142,21 +146,17 @@ test('calculator signup remains available for an invalid mix and verifies its ow
 
   context.fetch = async (url, options) => {
     requests.push([url, options]);
-    return { ok: true, json: async () => ({ success: true, needsVerification: true }) };
+    return { ok: true, json: async () => ({ success: true, message: 'Check your email' }) };
   };
   await elements['exposure-signup-form'].listeners.submit({ preventDefault() {} });
-  const signup = JSON.parse(requests.at(-1)[1].body);
-  assert.deepEqual(signup, {
+  // Page-load fetches (score, history) precede it; the signup POST is the last call.
+  assert.match(requests.at(-1)[0], /\/api\/mailing-list\/signup$/);
+  assert.deepEqual(JSON.parse(requests.at(-1)[1].body), {
     email: 'calculator@example.com',
     list: renderExports.EXPOSURE_ALERT_LIST,
   });
-  assert.equal(elements['exposure-verify-form'].hidden, false);
-
-  elements['exposure-verify-code'].value = '123456';
-  await elements['exposure-verify-form'].listeners.submit({ preventDefault() {} });
-  assert.deepEqual(JSON.parse(requests.at(-1)[1].body), {
-    username: 'calculator@example.com', code: '123456',
-  });
+  assert.equal(elements['exposure-signup-status'].textContent, 'Check your email');
+  assert.equal(elements['exposure-signup-submit'].textContent, 'Subscribed');
 });
 
 test('general signup keeps its attribution and re-enables submission after an API error', async () => {
@@ -174,4 +174,20 @@ test('general signup keeps its attribution and re-enables submission after an AP
   assert.equal(elements['signup-submit'].disabled, false);
   assert.equal(elements['signup-status'].textContent, 'Retry later');
   assert.equal(elements['exposure-signup-status'].textContent, '');
+});
+
+test('asset chips render etf_flow from whatever subset is present', () => {
+  const html = renderExports.assetTriggersHtml([
+    { asset: 'BTC', note: 'n', utility_score: 0.5, etf_flow: {
+      trend: 'rising', net_flow_usd_5d: 850e6, net_flow_usd_30d: -1.2e9, divergence: 'outflow_vs_easing',
+    } },
+    { asset: 'ETH', note: 'n', utility_score: 0.4, etf_flow: { state: 0.6 } },
+    { asset: 'XRP', note: 'n', utility_score: 0.3, etf_flow: 'garbage' },
+    { asset: 'SOL', note: 'n', utility_score: 0.3 },
+  ], '1.0');
+  assert.match(html, /ETF flows \+\$850M \(5d\) · -\$1\.2B \(30d\)/);
+  assert.match(html, /Divergence: ETF outflows despite easing/);
+  assert.equal((html.match(/asset-chip-etf"/g) || []).length, 1);
+  assert.equal(renderExports.etfFlowHtml(null), '');
+  assert.equal(renderExports.formatUsdCompact('x'), null);
 });

@@ -359,6 +359,37 @@ function assetScoreLabel(asset, scoreKind) {
   return String(asset || '').toUpperCase() === 'XRP' ? 'Utility' : 'Market Confirmation';
 }
 
+const ETF_FLOW_DIVERGENCE_LABELS = {
+  inflow_vs_tightening: 'Divergence: ETF inflows despite tightening',
+  outflow_vs_easing: 'Divergence: ETF outflows despite easing',
+};
+
+// Signed USD -> "+$850M" / "-$1.2B". Raw dollars, unit is in the field name.
+function formatUsdCompact(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '+';
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(abs >= 1e10 ? 0 : 1)}B`;
+  if (abs >= 1e6) return `${sign}$${Math.round(abs / 1e6)}M`;
+  return `${sign}$${Math.round(abs / 1e3)}K`;
+}
+
+// etf_flow is a v1 optional object (docs/API-CONTRACT.md §etf_flow); every key
+// is optional, so render only the parts present and nothing when none are.
+function etfFlowHtml(etfFlow) {
+  if (!etfFlow || typeof etfFlow !== 'object') return '';
+  const arrow = etfFlow.trend === 'rising' ? '\u25B2 ' : etfFlow.trend === 'falling' ? '\u25BC ' : '';
+  const parts = [];
+  const d5 = formatUsdCompact(etfFlow.net_flow_usd_5d);
+  const d30 = formatUsdCompact(etfFlow.net_flow_usd_30d);
+  if (d5) parts.push(`${d5} (5d)`);
+  if (d30) parts.push(`${d30} (30d)`);
+  const line = parts.length ? `<div class="asset-chip-etf">${arrow}ETF flows ${escapeHtml(parts.join(' \u00B7 '))}</div>` : '';
+  const divergence = ETF_FLOW_DIVERGENCE_LABELS[etfFlow.divergence]
+    ? `<div class="asset-chip-etf-divergence">${escapeHtml(ETF_FLOW_DIVERGENCE_LABELS[etfFlow.divergence])}</div>` : '';
+  return line + divergence;
+}
+
 function assetTriggersHtml(assetTriggers, schemaVersion) {
   const list = Array.isArray(assetTriggers) ? assetTriggers : [];
   if (!list.length) return '';
@@ -375,6 +406,7 @@ function assetTriggersHtml(assetTriggers, schemaVersion) {
       <div class="asset-chip-utility">${escapeHtml(assetScoreLabel(a.asset, a.score_kind))} ${pct}%</div>
       ${bridgeRole}
       ${flowComposition}
+      ${etfFlowHtml(a.etf_flow)}
     </div>
   `;
   }).join('')}</div>`;
@@ -603,6 +635,9 @@ const RENDER_EXPORTS = {
   policyClassifierBadgeHtml,
   BRIDGE_ROLE_LABELS,
   FLOW_COMPOSITION_LABELS,
+  ETF_FLOW_DIVERGENCE_LABELS,
+  formatUsdCompact,
+  etfFlowHtml,
   assetScoreLabel,
   assetTriggersHtml,
   FALSIFIABLE_RESPONSE_LABELS,

@@ -230,7 +230,28 @@ Translates macro liquidity into crypto implications. Per asset: a short trigger 
   Role question: risk asset / digital gold / liquidity proxy?
 - **ETH** — ETF flows, staking, DeFi activity, L2 activity.
 - **XRP / XLM** — higher beta. Regulatory catalysts, institutional adoption, liquidity
-  utility. XRP gets its own model (§5).
+  utility. XRP gets its own model (§5). Spot XRP ETF flows, where such products trade,
+  are a named input alongside BTC/ETH (see below).
+
+### Demand & adoption inputs
+
+Two distinct signals, deliberately kept apart because they answer different questions:
+
+- **Spot-ETF net flows** (BTC, ETH; XRP/SOL where listed) — *demand / allocation*. The
+  cleanest audited daily measure of new institutional and retail money entering crypto
+  through regulated wrappers. Read as **confirmation of liquidity transmission**, not as
+  proof of usage: flows are pro-cyclical (they chase price) and partly basis-trade
+  arbitrage. The useful reads are (a) macro liquidity easing **and** net inflows =
+  confirmed transmission; (b) liquidity easing **but** net outflows = divergence, flagged
+  in the asset note; (c) inflows during stress = allocation conviction (weaker evidence,
+  since flows lag).
+- **Stablecoin supply growth** — *adoption / on-chain dollar liquidity*. Net new
+  stablecoin issuance is the better proxy for real settlement demand. The XRP-specific
+  decomposition stays in §5.
+
+Neither is an "adoption score" by itself; both feed `crypto_liquidity` (§6.3) and the
+per-asset `note`. Flow **data ingestion and normalization happen upstream** — this repo
+renders whatever the contract carries.
 
 **Crypto Phase** (parallel to the policy Phase): `1` Stress · `2` Liquidity Expansion.
 
@@ -305,7 +326,7 @@ FlowGraph's flow edges don't need.
 
 Full node/edge JSON shape: `API-CONTRACT.md` §causal_graph.
 
-### 6.2 Seed nodes (~22 — Chris to review / trim / extend)
+### 6.2 Seed nodes (~24 — Chris to review / trim / extend)
 
 `domain` ∈ `energy` · `rates` · `funding` · `credit` · `policy` · `ai` · `macro` ·
 `global` · `crypto`. `state` is 0.0–1.0.
@@ -334,6 +355,12 @@ Full node/edge JSON shape: `API-CONTRACT.md` §causal_graph.
 | `yen_carry` | Yen Carry Trade | global |
 | `dxy` | Broad Dollar | global |
 | `crypto_liquidity` | Crypto Liquidity Conditions | crypto |
+| `crypto_etf_flows` | Spot Crypto ETF Net Flows | crypto |
+| `stablecoin_supply` | Stablecoin Supply Growth | crypto |
+
+`crypto_etf_flows` and `stablecoin_supply` are **activation** nodes: `state` 0.0–1.0
+rises with stronger net inflows / supply growth (0.5 ≈ flat), unlike the stress nodes
+above where higher means more stress. `state_label` buckets still apply.
 
 (BTC/ETH/XRP terminal nodes optional — they may be better as the §4 asset panel than as
 graph nodes.)
@@ -372,6 +399,9 @@ graph nodes.)
 | `unemployment` | → | `fed_response` | amplifies |
 | `yen_carry` | → | `treasury_liquidity` | dampens |
 | `dxy` | → | `crypto_liquidity` | dampens |
+| `crypto_etf_flows` | → | `crypto_liquidity` | amplifies |
+| `stablecoin_supply` | → | `crypto_liquidity` | amplifies |
+| `fed_response` | → | `stablecoin_supply` | amplifies |
 
 Two chains from the spec are fully present in this list:
 `oil_shock → inflation → fed_constraint … → fed_response → crypto_liquidity`, and
@@ -471,3 +501,12 @@ asserted without a trail. Today's front end collapses this into `dashboard_summa
 6. **Structured `next_triggers`.** E3D theses use machine-checkable
    `invalidation_predicates: [{kind, …}]`. LiquidityWatch's `next_triggers` is a string
    array today; consider structured predicates.
+7. **ETF-flow inputs — added 2026-09-30, pending upstream.** `crypto_etf_flows` and
+   `stablecoin_supply` nodes (§6.2–6.3) and the `asset_triggers[].etf_flow` contract field
+   are specified but not yet emitted (live `get_macro_causal_graph` returned
+   `available:false` at time of writing). The front end already renders `etf_flow` on the
+   asset chip; the causal graph itself has no renderer yet. Proposed for upstream
+   (Chris to confirm): normalize `state` as a z-score of the 5-day net flow against a
+   trailing 90-day distribution, mapped to 0.0–1.0 with 0.5 = flat; show 5d and 30d USD
+   in `etf_flow` for context. Open: which flow source(s) upstream ingests, and whether
+   `fed_response → stablecoin_supply` polarity is right.

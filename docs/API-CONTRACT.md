@@ -193,6 +193,25 @@ tier and is labeled as such in the UI regardless of value.
 }
 ```
 
+#### `etf_flow` (optional, BTC/ETH and XRP/SOL where a spot ETF exists; MODEL.md §4)
+```jsonc
+"etf_flow": {
+  "state": 0.62,                 // 0.0–1.0 activation; 0.5 ≈ flat, higher = stronger net inflows
+  "trend": "rising",             // rising | falling | flat
+  "net_flow_usd_5d": 850000000,  // signed raw USD; unit is in the key name
+  "net_flow_usd_30d": 3200000000,
+  "divergence": "none"           // none | inflow_vs_tightening | outflow_vs_easing  (vs macro liquidity)
+}
+```
+`state` follows the 0.0–1.0 scale rule. The `*_usd_*` fields are dimensional raw values
+carrying their unit in the key (like trigger-metric raw values), not normalized
+magnitudes, so the scale rule does not apply to them. Every key is optional. **Not yet
+rendered** by the front end; until it is, the same signal reaches users through the
+asset `note`.
+
+The graph-level counterpart is the `crypto_etf_flows` node (below); `etf_flow` is the
+per-asset breakdown, the node the aggregate.
+
 ---
 
 ## `event.causal_graph` (MODEL.md §6)
@@ -206,8 +225,8 @@ needs the latest.
   "snapshot": {
     "id": "lw-cg-20260908T1305Z",
     "schema_version": "1.0",
-    "node_count": 22,
-    "edge_count": 27,
+    "node_count": 24,
+    "edge_count": 30,
     "created_at": "2026-09-08T13:05:20Z",
     "created_by_agent": "liquiditywatch-synth",   // provenance, per NavigationSignal
     "model": "…"
@@ -255,6 +274,10 @@ needs the latest.
   each cycle. It does **not** invent structure inline — a proposed new node/edge goes in a
   separate `causal_graph.proposed` array (same shape, ignored by the default renderer) and
   is promoted only by a human editing `MODEL.md` (E3D `StoryHypothesis` pattern).
+- **Activation nodes.** `crypto_etf_flows` and `stablecoin_supply` (domain `crypto`) use
+  `state` as activation (higher = stronger inflow/growth), not stress. Their `evidence`
+  carries the raw figures as `series` entries (e.g. `{ "type": "series", "id":
+  "BTC_SPOT_ETF_NETFLOW_5D", "summary": "+$850M net, 5d" }`).
 - **Every edge's endpoints must resolve** to a node `id` present in `nodes[]`. Front end
   drops dangling edges silently.
 - **`edge_status` is the "is this link hot" signal** — not a boolean. `strengthening` /
