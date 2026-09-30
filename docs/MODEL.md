@@ -501,12 +501,23 @@ asserted without a trail. Today's front end collapses this into `dashboard_summa
 6. **Structured `next_triggers`.** E3D theses use machine-checkable
    `invalidation_predicates: [{kind, …}]`. LiquidityWatch's `next_triggers` is a string
    array today; consider structured predicates.
-7. **ETF-flow inputs — added 2026-09-30, pending upstream.** `crypto_etf_flows` and
-   `stablecoin_supply` nodes (§6.2–6.3) and the `asset_triggers[].etf_flow` contract field
-   are specified but not yet emitted (live `get_macro_causal_graph` returned
-   `available:false` at time of writing). The front end already renders `etf_flow` on the
-   asset chip; the causal graph itself has no renderer yet. Proposed for upstream
-   (Chris to confirm): normalize `state` as a z-score of the 5-day net flow against a
-   trailing 90-day distribution, mapped to 0.0–1.0 with 0.5 = flat; show 5d and 30d USD
-   in `etf_flow` for context. Open: which flow source(s) upstream ingests, and whether
-   `fed_response → stablecoin_supply` polarity is right.
+7. **ETF-flow inputs — implemented 2026-09-30.** Decisions taken (Chris may overrule):
+   - **Source:** Coinglass v4 spot-ETF flow history (BTC, ETH; needs `COINGLASS_API_KEY`
+     upstream) and DefiLlama total stablecoin supply (free, no key). Farside is
+     Cloudflare-blocked and SoSoValue is keyed, so neither was chosen. XRP/SOL ETF flows
+     are not ingested yet (no verified endpoint); they stay a named §4 input in prose.
+   - **Normalization:** `state` = 0.5 + z/6, clamped to 0.0–1.0, where z scores the latest
+     5-day net ETF flow (or 7-day stablecoin supply % change) against its trailing
+     90-day distribution (≥30 samples, else no `state`). 0.5 = typical, ±3σ saturates.
+     5d and 30d USD figures are carried for context.
+   - **Polarity:** `fed_response → stablecoin_supply` is **amplifies** — a Fed/Treasury
+     liquidity response expands dollar liquidity that flows into stablecoin issuance
+     (lagged; tightening is the reverse). Adopted, with `crypto_etf_flows` and
+     `stablecoin_supply` → `crypto_liquidity` also amplifies.
+   - **Emitted so far:** upstream computes the two activation nodes and the
+     `fed_response` node/edge (a pass-through of the `fed_response` sub-score) as a
+     **partial** `causal_graph` snapshot (`snapshot.partial: true`). The other ~21 nodes,
+     and `crypto_liquidity` (so the flow → `crypto_liquidity` edges), are not emitted yet.
+     The front end renders whatever subset arrives.
+   - Divergence (`inflow_vs_tightening` / `outflow_vs_easing`) is the one model-authored
+     label; the flow figures themselves are computed in code, never by the LLM.

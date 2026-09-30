@@ -14,7 +14,7 @@ function pageHarness(storedValue = null) {
     'exposure-leveraged', 'exposure-validation', 'personal-result',
     'score-panel', 'subscore-panel', 'subscore-breakdown', 'classification-panel',
     'classification-body', 'newsletter-panel', 'newsletter-body',
-    'score-history', 'history-chart-panel',
+    'score-history', 'history-chart-panel', 'causal-graph', 'causal-graph-panel',
     'signup-form', 'signup-email', 'signup-submit', 'verify-form', 'verify-code',
     'verify-submit', 'signup-status', 'exposure-signup-form', 'exposure-signup-email',
     'exposure-signup-submit', 'exposure-verify-form', 'exposure-verify-code',
@@ -190,4 +190,43 @@ test('asset chips render etf_flow from whatever subset is present', () => {
   assert.equal((html.match(/asset-chip-etf"/g) || []).length, 1);
   assert.equal(renderExports.etfFlowHtml(null), '');
   assert.equal(renderExports.formatUsdCompact('x'), null);
+});
+
+test('causal graph renders any subset, drops dangling/closed edges, and escapes text', () => {
+  assert.equal(renderExports.causalGraphHtml(null), '');
+  assert.equal(renderExports.causalGraphHtml({ nodes: [] }), '');
+  const html = renderExports.causalGraphHtml({
+    snapshot: { partial: true },
+    nodes: [
+      { id: 'fed_response', label: 'Fed <b>Response</b>', domain: 'policy', state: 0.3, trend: 'rising' },
+      { id: 'stablecoin_supply', label: 'Stablecoin Supply Growth', domain: 'weird', state: 0.9 },
+      { id: 'crypto_etf_flows', label: 'ETF Flows', domain: 'crypto', state: 0.1 },
+      { id: 'fed_response', label: 'duplicate' },
+    ],
+    edges: [
+      { origin: 'fed_response', destination: 'stablecoin_supply', polarity: 'amplifies', edge_status: 'strengthening', confidence: 0.7 },
+      { origin: 'fed_response', destination: 'missing', polarity: 'amplifies' },
+      { origin: 'fed_response', destination: 'crypto_etf_flows', polarity: 'dampens', edge_status: 'closed' },
+      { origin: 'fed_response', destination: 'crypto_etf_flows', polarity: 'mystery' },
+    ],
+  });
+  assert.equal((html.match(/<rect /g) || []).length, 3, 'duplicate node id dropped');
+  assert.equal((html.match(/marker-end=/g) || []).length, 2, 'dangling + closed edges dropped');
+  assert.match(html, /Fed &lt;b&gt;Response&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>Response/);
+  assert.match(html, /Partial view/);
+  assert.match(html, /confidence 70%/);
+  // Activation nodes are colored inverted: 0.9 growth is green, 0.1 flows are red.
+  assert.match(html, /stroke="#34c77b"[^>]*\/>[^]*?90%/);
+  assert.match(html, /stroke="#e0574f"[^>]*\/>[^]*?10%/);
+});
+
+test('causal graph layering tolerates cycles', () => {
+  const nodes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  const layers = renderExports.graphLayers(nodes, [
+    { origin: 'a', destination: 'b' }, { origin: 'b', destination: 'c' }, { origin: 'c', destination: 'b' },
+  ]);
+  assert.equal(layers.get('a'), 0);
+  assert.ok(layers.get('b') >= 1 && layers.get('c') >= 1);
+  assert.ok(renderExports.causalGraphHtml({ nodes, edges: [{ origin: 'b', destination: 'c' }, { origin: 'c', destination: 'b' }] }).includes('<svg'));
 });

@@ -229,6 +229,7 @@ needs the latest.
     "edge_count": 30,
     "created_at": "2026-09-08T13:05:20Z",
     "created_by_agent": "liquiditywatch-synth",   // provenance, per NavigationSignal
+    "partial": true,                             // optional: only a subset of MODEL.md §6.2 is present
     "model": "…"
   },
 
@@ -278,6 +279,11 @@ needs the latest.
   `state` as activation (higher = stronger inflow/growth), not stress. Their `evidence`
   carries the raw figures as `series` entries (e.g. `{ "type": "series", "id":
   "BTC_SPOT_ETF_NETFLOW_5D", "summary": "+$850M net, 5d" }`).
+- **Partial snapshots are valid.** Until the full graph is emitted, the pipeline sends
+  `snapshot.partial: true` with only the nodes it can compute in code (today:
+  `crypto_etf_flows`, `stablecoin_supply`, and a `fed_response` pass-through of the
+  sub-score). Activation nodes omit `state_label` (the stress buckets don't apply). The
+  front end renders the subset (`causalGraphHtml` in `render.js`) and notes it as partial.
 - **Every edge's endpoints must resolve** to a node `id` present in `nodes[]`. Front end
   drops dangling edges silently.
 - **`edge_status` is the "is this link hot" signal** — not a boolean. `strengthening` /

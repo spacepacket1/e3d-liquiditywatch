@@ -412,6 +412,141 @@ function assetTriggersHtml(assetTriggers, schemaVersion) {
   }).join('')}</div>`;
 }
 
+// ---- Causal graph (docs/API-CONTRACT.md §event.causal_graph, MODEL.md §6) ----
+// Renders whatever subset of nodes/edges the event carries as a layered inline
+// SVG. Structure is authored upstream; this only draws it. Colors are hardcoded
+// hex (like buildGaugeSvg) so the SVG is self-contained.
+
+// Nodes whose `state` is activation (higher = stronger inflow/growth), not stress.
+const ACTIVATION_NODE_IDS = new Set(['crypto_etf_flows', 'stablecoin_supply']);
+const KNOWN_GRAPH_DOMAINS = new Set(['energy', 'rates', 'funding', 'credit', 'policy', 'ai', 'macro', 'global', 'crypto']);
+const GRAPH_POLARITY_LABELS = { amplifies: 'amplifies', dampens: 'dampens', constrains: 'constrains' };
+const GRAPH_NODE_W = 168;
+const GRAPH_NODE_H = 56;
+const GRAPH_COL_GAP = 84;
+const GRAPH_ROW_GAP = 22;
+const GRAPH_PAD = 16;
+
+function graphNodeColor(node) {
+  const state = node.state;
+  if (typeof state !== 'number' || !Number.isFinite(state)) return '#93a2c0';
+  const stressLike = ACTIVATION_NODE_IDS.has(node.id) ? 1 - state : state;
+  if (stressLike < 0.34) return '#34c77b';
+  if (stressLike < 0.67) return '#e8b84b';
+  return '#e0574f';
+}
+
+// Longest-path layering, tolerant of cycles (the model has one): relax at most
+// |nodes| times, so back edges just stop pushing nodes rightward.
+function graphLayers(nodes, edges) {
+  const layer = new Map(nodes.map((n) => [n.id, 0]));
+  for (let i = 0; i < nodes.length; i += 1) {
+    let changed = false;
+    for (const e of edges) {
+      const next = layer.get(e.origin) + 1;
+      if (next > layer.get(e.destination) && next < nodes.length) {
+        layer.set(e.destination, next);
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  return layer;
+}
+
+function graphLabelLines(label) {
+  const words = String(label || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    if (current && (current + ' ' + word).length > 22) { lines.push(current); current = word; }
+    else current = current ? `${current} ${word}` : word;
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, 2).map((l) => (l.length > 24 ? `${l.slice(0, 23)}…` : l));
+}
+
+function causalGraphHtml(graph) {
+  if (!graph || typeof graph !== 'object' || !Array.isArray(graph.nodes)) return '';
+  const seen = new Set();
+  const nodes = graph.nodes.filter((n) => {
+    if (!n || typeof n.id !== 'string' || !n.id || seen.has(n.id)) return false;
+    seen.add(n.id);
+    return true;
+  });
+  if (!nodes.length) return '';
+  // Dangling edges are dropped silently; `closed` edges are hidden.
+  const edges = (Array.isArray(graph.edges) ? graph.edges : []).filter((e) => (
+    e && seen.has(e.origin) && seen.has(e.destination) && e.origin !== e.destination && e.edge_status !== 'closed'
+  ));
+
+  const layers = graphLayers(nodes, edges);
+  const columns = new Map();
+  for (const n of nodes) {
+    const l = layers.get(n.id);
+    if (!columns.has(l)) columns.set(l, []);
+    columns.get(l).push(n);
+  }
+  const colCount = Math.max(...columns.keys()) + 1;
+  const tallest = Math.max(...[...columns.values()].map((c) => c.length));
+  const width = GRAPH_PAD * 2 + colCount * GRAPH_NODE_W + (colCount - 1) * GRAPH_COL_GAP;
+  const height = GRAPH_PAD * 2 + tallest * GRAPH_NODE_H + (tallest - 1) * GRAPH_ROW_GAP;
+
+  const pos = new Map();
+  for (const [l, col] of columns) {
+    const colHeight = col.length * GRAPH_NODE_H + (col.length - 1) * GRAPH_ROW_GAP;
+    const top = GRAPH_PAD + (height - GRAPH_PAD * 2 - colHeight) / 2;
+    col.forEach((n, i) => {
+      pos.set(n.id, { x: GRAPH_PAD + l * (GRAPH_NODE_W + GRAPH_COL_GAP), y: top + i * (GRAPH_NODE_H + GRAPH_ROW_GAP) });
+    });
+  }
+
+  const edgeSvg = edges.map((e) => {
+    const a = pos.get(e.origin);
+    const b = pos.get(e.destination);
+    const forward = layers.get(e.destination) > layers.get(e.origin);
+    const x1 = forward ? a.x + GRAPH_NODE_W : a.x + GRAPH_NODE_W / 2;
+    const y1 = forward ? a.y + GRAPH_NODE_H / 2 : a.y + GRAPH_NODE_H;
+    const x2 = forward ? b.x : b.x + GRAPH_NODE_W / 2;
+    const y2 = forward ? b.y + GRAPH_NODE_H / 2 : b.y + GRAPH_NODE_H;
+    const d = forward
+      ? `M${x1},${y1} C${x1 + GRAPH_COL_GAP / 2},${y1} ${x2 - GRAPH_COL_GAP / 2},${y2} ${x2},${y2}`
+      : `M${x1},${y1} C${x1},${y1 + 34} ${x2},${y2 + 34} ${x2},${y2}`;
+    const polarity = GRAPH_POLARITY_LABELS[e.polarity];
+    const dash = e.polarity === 'dampens' ? ' stroke-dasharray="6 4"' : (e.polarity === 'constrains' ? ' stroke-dasharray="2 4"' : '');
+    const hot = e.edge_status === 'strengthening' || e.edge_status === 'weakening';
+    const stroke = polarity ? (e.polarity === 'dampens' ? '#9b7fe8' : '#4dd6e8') : '#93a2c0';
+    const conf = typeof e.confidence === 'number' ? ` · confidence ${Math.round(e.confidence * 100)}%` : '';
+    const title = `${e.origin} ${polarity || 'affects'} ${e.destination}${conf}${e.note ? ` — ${e.note}` : ''}`;
+    return `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${hot ? 2.6 : 1.6}"${dash} opacity="${e.edge_status === 'weakening' ? 0.55 : 0.9}" marker-end="url(#cg-arrow)"><title>${escapeHtml(title)}</title></path>`;
+  }).join('');
+
+  const nodeSvg = nodes.map((n) => {
+    const { x, y } = pos.get(n.id);
+    const color = graphNodeColor(n);
+    const domain = KNOWN_GRAPH_DOMAINS.has(n.domain) ? n.domain : 'macro';
+    const pct = typeof n.state === 'number' && Number.isFinite(n.state) ? `${Math.round(n.state * 100)}%` : '—';
+    const arrow = n.trend === 'rising' ? ' ▲' : n.trend === 'falling' ? ' ▼' : '';
+    const lines = graphLabelLines(n.label || n.id);
+    const tspans = lines.map((l, i) => `<tspan x="${x + 10}" dy="${i === 0 ? 0 : 13}">${escapeHtml(l)}</tspan>`).join('');
+    const kind = ACTIVATION_NODE_IDS.has(n.id) ? 'activation' : 'stress';
+    const title = `${n.label || n.id} (${domain}, ${kind} ${pct})${n.change_reason ? ` — ${n.change_reason}` : ''}`;
+    return `<g><title>${escapeHtml(title)}</title>`
+      + `<rect x="${x}" y="${y}" width="${GRAPH_NODE_W}" height="${GRAPH_NODE_H}" rx="8" fill="#0a1426" stroke="${color}" stroke-width="1.5"/>`
+      + `<text x="${x + 10}" y="${y + 17}" font-size="12" font-weight="600" fill="#e9edf5">${tspans}</text>`
+      + `<text x="${x + 10}" y="${y + GRAPH_NODE_H - 8}" font-size="10" fill="#93a2c0">${escapeHtml(domain)}</text>`
+      + `<text x="${x + GRAPH_NODE_W - 10}" y="${y + GRAPH_NODE_H - 8}" font-size="12" font-weight="700" text-anchor="end" fill="${color}">${escapeHtml(pct)}${arrow}</text></g>`;
+  }).join('');
+
+  const svg = `<svg class="causal-graph-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Causal graph of liquidity and stress drivers">`
+    + `<defs><marker id="cg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#93a2c0"/></marker></defs>`
+    + `${edgeSvg}${nodeSvg}</svg>`;
+  const partial = graph.snapshot && graph.snapshot.partial
+    ? '<div class="causal-graph-note">Partial view: only factors computed this cycle are shown.</div>' : '';
+  return `<div class="causal-graph-scroll">${svg}</div>${partial}`
+    + '<div class="causal-graph-legend">Solid line amplifies · dashed dampens · dotted constrains. Stress nodes: higher = more stress. ETF-flow and stablecoin nodes: higher = stronger inflow or growth (green).</div>';
+}
+
 const FALSIFIABLE_RESPONSE_LABELS = {
   srf_expansion: 'an SRF expansion',
   discount_window_spike: 'a discount-window usage spike',
@@ -638,6 +773,9 @@ const RENDER_EXPORTS = {
   ETF_FLOW_DIVERGENCE_LABELS,
   formatUsdCompact,
   etfFlowHtml,
+  ACTIVATION_NODE_IDS,
+  graphLayers,
+  causalGraphHtml,
   assetScoreLabel,
   assetTriggersHtml,
   FALSIFIABLE_RESPONSE_LABELS,

@@ -240,6 +240,16 @@
     border-radius: 12px;
     padding: 20px 22px 22px;
   }
+  .causal-graph-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px 20px 14px;
+  }
+  .causal-graph-scroll { overflow-x: auto; }
+  .causal-graph-svg { display: block; max-width: none; }
+  .causal-graph-note { font-size: 12px; color: var(--gold); margin-top: 8px; }
+  .causal-graph-legend { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
   .subscore-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .subscore-chip {
     background: rgba(6, 11, 22, 0.5);
@@ -431,7 +441,7 @@
     .gauge-score-number { font-size: 56px; }
     .gauge-score-suffix { font-size: 17px; }
     .trigger-metrics, .asset-triggers, .subscore-grid { grid-template-columns: 1fr; }
-    .subscore-panel, .classification-panel { padding: 16px 14px 18px; }
+    .subscore-panel, .classification-panel, .causal-graph-panel { padding: 16px 14px 18px; }
     .newsletter-panel { padding: 16px 16px; font-size: 14px; }
     .signup-panel { padding: 18px 16px; }
     .signup-form { flex-direction: column; }
@@ -513,6 +523,12 @@
     <h2>Sub-Engine Breakdown</h2>
     <div class="subhead">How each domain is contributing to the headline score.</div>
     <div class="subscore-panel" id="subscore-panel"></div>
+  </section>
+
+  <section id="causal-graph" hidden>
+    <h2>Causal Graph</h2>
+    <div class="subhead">How stress and liquidity propagate between the factors behind the score.</div>
+    <div class="causal-graph-panel" id="causal-graph-panel"></div>
   </section>
 
   <section id="classification-body" hidden>
@@ -701,6 +717,9 @@ function renderEventIntoPage(event) {
   const subscoreHtml = subscoresHtml(event.subscores);
   document.getElementById('subscore-panel').innerHTML = subscoreHtml;
   document.getElementById('subscore-breakdown').hidden = !subscoreHtml;
+  const graphHtml = causalGraphHtml(event.causal_graph);
+  document.getElementById('causal-graph-panel').innerHTML = graphHtml;
+  document.getElementById('causal-graph').hidden = !graphHtml;
   const blocksHtml = classificationBlocksHtml(event.classification_blocks);
   document.getElementById('classification-panel').innerHTML = blocksHtml;
   document.getElementById('classification-body').hidden = !blocksHtml;
