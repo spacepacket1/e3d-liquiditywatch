@@ -502,14 +502,21 @@ asserted without a trail. Today's front end collapses this into `dashboard_summa
    `invalidation_predicates: [{kind, …}]`. LiquidityWatch's `next_triggers` is a string
    array today; consider structured predicates.
 7. **ETF-flow inputs — implemented 2026-09-30.** Decisions taken (Chris may overrule):
-   - **Source:** Coinglass v4 spot-ETF flow history (BTC, ETH; needs `COINGLASS_API_KEY`
-     upstream) and DefiLlama total stablecoin supply (free, no key). Farside is
-     Cloudflare-blocked and SoSoValue is keyed, so neither was chosen. XRP/SOL ETF flows
-     are not ingested yet (no verified endpoint); they stay a named §4 input in prose.
-   - **Normalization:** `state` = 0.5 + z/6, clamped to 0.0–1.0, where z scores the latest
-     5-day net ETF flow (or 7-day stablecoin supply % change) against its trailing
-     90-day distribution (≥30 samples, else no `state`). 0.5 = typical, ±3σ saturates.
-     5d and 30d USD figures are carried for context.
+   - **Source:** TradingView's public screener (`scanner.tradingview.com`), anonymous, no
+     account or key. It is **unofficial and undocumented** and can change or block us; the
+     pipeline degrades to "no ETF reading" if it fails. It gives 1M/3M net fund flows plus
+     AUM, shares outstanding and NAV for US spot funds: BTC (8), ETH (8) and XRP (3).
+     Coinglass is an optional first choice when `COINGLASS_API_KEY` is on a plan that
+     includes ETF flows (the free tier returns "Upgrade plan"). Stablecoins: DefiLlama.
+     Farside is Cloudflare-blocked; brokerage accounts (E*TRADE, Fidelity) expose no flows.
+     SOL ETFs are not ingested (no resolving tickers found).
+   - **Normalization:** two tiers, reported upstream as `state_basis`.
+     *Coarse, from day one (`monthly_vs_prior`):* 1M flow vs the average of the two months
+     before it, scaled by 2% of AUM, `state = 0.5 + 0.5·tanh(x)`; only the 30d USD figure.
+     *Full (`z_90d`):* the pipeline snapshots shares × NAV daily; flow = Δshares × NAV, the
+     5-day sum is scored as z against the trailing 90 days (≥30 samples), and
+     `state = 0.5 + z/6`. Takes roughly 5 days for the 5d figure and ~35 days for the z-score.
+     Stablecoin supply uses the z-score form directly (7-day % change vs 90 days).
    - **Polarity:** `fed_response → stablecoin_supply` is **amplifies** — a Fed/Treasury
      liquidity response expands dollar liquidity that flows into stablecoin issuance
      (lagged; tightening is the reverse). Adopted, with `crypto_etf_flows` and
