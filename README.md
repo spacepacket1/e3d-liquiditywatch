@@ -52,3 +52,7 @@ npm start   # serves public/ on :3008 (or $PORT)
 ```
 
 Part of the [E3D](https://e3d.ai) ecosystem — a FutCo intelligence product.
+
+## License
+
+[MIT](LICENSE) © 2026 FutCo LLC. Part of the [FutCo](https://futco.ai/projects) open-source ecosystem.
