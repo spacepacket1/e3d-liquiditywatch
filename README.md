@@ -22,6 +22,8 @@ Every evaluation runs through three independent AI stages — a different model 
 
 Every evaluation is stored, but only ones judged *materially different* from the last published reading trigger a new score, a notification, and a newsletter issue. No daily noise.
 
+Ahead of that three-stage run, a fast internal pre-check estimates whether enough has changed to be worth a fresh evaluation. Right now it's purely observational — logged for calibration alongside every cycle, never skipping or shortening the evaluation itself — while we build a track record on how well it agrees with the full research pass.
+
 ## What you get
 
 - **A live gauge, 0–100** across six regimes — from *Accommodative* through *Mild Watchfulness*, *Contained Tension*, *Restrictive Policy*, the *Policy-Forcing Danger Zone*, up to *Market Dysfunction*.
