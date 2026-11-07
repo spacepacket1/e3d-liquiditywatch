@@ -106,3 +106,25 @@ test('SSR: an event without an outlook leaves the section hidden and empty', asy
     assert.ok(body.includes('<div class="outlook-panel" id="outlook-panel"></div>'));
   });
 });
+
+test('role badges appear only when at least two different roles are credited', () => {
+  const mixed = outlookHtml(full());
+  assert.ok(mixed.includes('Macro Desk') && mixed.includes('Skeptic'));
+  const one = full();
+  one.scenarios = one.scenarios.map((x) => ({ ...x, role: 'macro-market-analyst' }));
+  const out = outlookHtml(one);
+  assert.ok(!out.includes('class="outlook-role"'), 'one badge repeated on every card is decoration');
+  assert.ok(out.includes('Keeps falling'), 'the scenarios themselves still render');
+  const none = full();
+  none.scenarios = none.scenarios.map((x) => ({ ...x, role: undefined }));
+  assert.ok(!outlookHtml(none).includes('class="outlook-role"'));
+});
+
+test('the about page explains the AI council honestly: roles not people, automatic checking, the disclaimer', () => {
+  const about = require('node:fs').readFileSync(path.join(__dirname, '..', 'public', 'about.html'), 'utf8');
+  for (const part of ['The AI council', 'What Could Happen Next', 'AI roles, not people', 'Macro Desk', 'Skeptic', 'Fact-Checker',
+    'Checked by code, not by a person', 'graded automatically', 'never a target score', 'https://pilot.e3d.ai', 'Not investment advice']) {
+    assert.ok(about.includes(part), `about page is missing: ${part}`);
+  }
+  assert.ok(!/guarantee|will rise|will fall/i.test(about), 'no promissory language');
+});

@@ -736,12 +736,12 @@ function outlookRowHtml(label, value, cls) {
   return text ? `<div class="outlook-row${cls ? ` ${cls}` : ''}"><strong>${escapeHtml(label)}</strong> ${escapeHtml(text)}</div>` : '';
 }
 
-function outlookScenarioHtml(s) {
+function outlookScenarioHtml(s, showRoles) {
   if (!s || typeof s !== 'object') return '';
   if (!outlookText(s.if) || !outlookText(s.then)) return '';
   const kind = OUTLOOK_KIND_LABELS[s.kind];
   if (!kind) return '';
-  const role = Object.prototype.hasOwnProperty.call(OUTLOOK_ROLE_LABELS, s.role) ? OUTLOOK_ROLE_LABELS[s.role] : '';
+  const role = showRoles && Object.prototype.hasOwnProperty.call(OUTLOOK_ROLE_LABELS, s.role) ? OUTLOOK_ROLE_LABELS[s.role] : '';
   const odds = OUTLOOK_ODDS.includes(s.odds) ? s.odds : '';
   const oddsReason = outlookText(s.odds_reason);
   return `<div class="outlook-card outlook-${escapeHtml(s.kind)}">
@@ -757,7 +757,12 @@ function outlookScenarioHtml(s) {
 
 function outlookHtml(outlook) {
   if (!outlook || typeof outlook !== 'object' || !Array.isArray(outlook.scenarios)) return '';
-  const cards = outlook.scenarios.map(outlookScenarioHtml).filter(Boolean);
+  // Role badges only mean something when different roles led different scenarios; one badge repeated
+  // on every card is decoration, so it is shown only when at least two distinct roles are credited.
+  const creditedRoles = new Set(outlook.scenarios
+    .filter((x) => x && Object.prototype.hasOwnProperty.call(OUTLOOK_ROLE_LABELS, x.role)).map((x) => x.role));
+  const showRoles = creditedRoles.size >= 2;
+  const cards = outlook.scenarios.map((x) => outlookScenarioHtml(x, showRoles)).filter(Boolean);
   if (!cards.length) return '';
   // Not the current event's own outlook (most days are non-material): say when it is from.
   const asOf = typeof outlook.as_of === 'string' && /^\d{4}-\d{2}-\d{2}/.test(outlook.as_of) ? outlook.as_of.slice(0, 10) : '';
