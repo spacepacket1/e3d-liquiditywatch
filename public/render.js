@@ -707,6 +707,76 @@ function historyChartHtml(history) {
   return `<div class="history-chart-wrap">${svg}</div>`;
 }
 
+
+// "What could happen next": validated scenarios from the AI council (see
+// docs/API-CONTRACT.md, `outlook`). Every field is optional: a scenario needs
+// only `if` and `then` to render, unknown kinds/roles/odds are skipped or
+// shown plainly, and with no usable scenario the whole section is ''.
+// All text is escaped; nothing here is trusted as HTML.
+const OUTLOOK_KIND_LABELS = {
+  falling: 'Keeps falling',
+  rebound: 'Rebounds',
+  tail: 'Tail-risk break',
+  status_quo: 'Nothing changes',
+};
+const OUTLOOK_ROLE_LABELS = {
+  'macro-market-analyst': 'Macro Desk',
+  factchecker: 'Fact-Checker',
+  skeptic: 'Skeptic',
+};
+const OUTLOOK_ODDS = ['low', 'medium', 'high'];
+const OUTLOOK_DISCLAIMER = 'Scenario analysis, not financial advice or a prediction. LiquidityWatch measures market stress; it does not tell anyone what to buy or sell.';
+
+function outlookText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function outlookRowHtml(label, value, cls) {
+  const text = outlookText(value);
+  return text ? `<div class="outlook-row${cls ? ` ${cls}` : ''}"><strong>${escapeHtml(label)}</strong> ${escapeHtml(text)}</div>` : '';
+}
+
+function outlookScenarioHtml(s) {
+  if (!s || typeof s !== 'object') return '';
+  if (!outlookText(s.if) || !outlookText(s.then)) return '';
+  const kind = OUTLOOK_KIND_LABELS[s.kind];
+  if (!kind) return '';
+  const role = Object.prototype.hasOwnProperty.call(OUTLOOK_ROLE_LABELS, s.role) ? OUTLOOK_ROLE_LABELS[s.role] : '';
+  const odds = OUTLOOK_ODDS.includes(s.odds) ? s.odds : '';
+  const oddsReason = outlookText(s.odds_reason);
+  return `<div class="outlook-card outlook-${escapeHtml(s.kind)}">
+    <div class="outlook-kind">${escapeHtml(kind)}${role ? ` <span class="outlook-role">${escapeHtml(role)}</span>` : ''}</div>
+    ${outlookRowHtml('If', s.if, 'outlook-if')}
+    ${outlookRowHtml('Then', s.then, 'outlook-then')}
+    ${outlookRowHtml('Backed by:', s.backed_by, 'outlook-minor')}
+    ${outlookRowHtml('Depends on:', s.depends_on, 'outlook-minor')}
+    ${outlookRowHtml('Wrong if:', s.wrong_if, 'outlook-minor')}
+    ${odds ? `<div class="outlook-row outlook-minor"><strong>Odds:</strong> <span class="outlook-odds outlook-odds-${odds}">${escapeHtml(odds)}</span>${oddsReason ? ` &mdash; ${escapeHtml(oddsReason)}` : ''}</div>` : ''}
+  </div>`;
+}
+
+function outlookHtml(outlook) {
+  if (!outlook || typeof outlook !== 'object' || !Array.isArray(outlook.scenarios)) return '';
+  const cards = outlook.scenarios.map(outlookScenarioHtml).filter(Boolean);
+  if (!cards.length) return '';
+  // Not the current event's own outlook (most days are non-material): say when it is from.
+  const asOf = typeof outlook.as_of === 'string' && /^\d{4}-\d{2}-\d{2}/.test(outlook.as_of) ? outlook.as_of.slice(0, 10) : '';
+  const dated = asOf && outlook.is_current !== true
+    ? `<div class="outlook-asof">Latest outlook, ${escapeHtml(formatHistoryDateLabel(asOf))}</div>` : '';
+  const scorecard = outlook.scorecard && typeof outlook.scorecard === 'object' ? outlookText(outlook.scorecard.text) : '';
+  const disclaimer = outlookText(outlook.disclaimer) || OUTLOOK_DISCLAIMER;
+  const howMade = outlookText(outlook.how_made);
+  return `<div class="outlook-banner-wrap"><img class="outlook-banner" src="/lw-header.jpg" alt="The LiquidityWatch AI desk: three AI characters at a news desk, powered by E3D Pilot" loading="lazy"></div>
+    <div class="outlook-label">AI roles, not people</div>
+    ${dated}
+    ${cards.join('')}
+    ${outlookText(outlook.disagreement) ? `<p class="outlook-note"><strong>Where the roles split:</strong> ${escapeHtml(outlook.disagreement)}</p>` : ''}
+    ${outlookText(outlook.fact_check_note) ? `<p class="outlook-note"><strong>Fact-Checker:</strong> ${escapeHtml(outlook.fact_check_note)}</p>` : ''}
+    ${scorecard ? `<p class="outlook-note"><strong>Track record:</strong> ${escapeHtml(scorecard)}, graded automatically against LiquidityWatch's own data.</p>` : ''}
+    <p class="outlook-disclaimer"><strong>${escapeHtml(disclaimer)}</strong></p>
+    <p class="outlook-fine">${howMade ? `${escapeHtml(howMade)} ` : ''}Powered by E3D Pilot.</p>`;
+}
+
 const EMPTY_STATE_HTML = '<div class="empty-state">No stress evaluation has been published yet. The monitoring pipeline runs on a schedule &mdash; check back soon.</div>';
 const ERROR_STATE_HTML = '<div class="empty-state">Unable to load the current score right now.</div>';
 
@@ -786,6 +856,10 @@ const RENDER_EXPORTS = {
   formatHistoryDateLabel,
   buildHistoryChartSvg,
   historyChartHtml,
+  OUTLOOK_KIND_LABELS,
+  OUTLOOK_ROLE_LABELS,
+  OUTLOOK_DISCLAIMER,
+  outlookHtml,
   buildScorePanelHtml,
   EMPTY_STATE_HTML,
   ERROR_STATE_HTML,

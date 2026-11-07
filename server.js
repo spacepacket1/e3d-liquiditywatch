@@ -8,6 +8,7 @@ const {
   subscoresHtml,
   classificationBlocksHtml,
   historyChartHtml,
+  outlookHtml,
 } = require('./public/render.js');
 
 const app = express();
@@ -107,6 +108,14 @@ function renderIndexHtml(event, history) {
     html = html
       .replace('<section id="newsletter-body" hidden>', '<section id="newsletter-body">')
       .replace('<div class="newsletter-panel" id="newsletter-panel"></div>', `<div class="newsletter-panel" id="newsletter-panel">${event.newsletter_body_html}</div>`);
+  }
+
+  // Optional AI-council outlook (render.js escapes every field; '' when absent or unusable).
+  const outlookMarkup = outlookHtml(event.outlook);
+  if (outlookMarkup) {
+    html = html
+      .replace('<section id="outlook-body" hidden>', '<section id="outlook-body">')
+      .replace('<div class="outlook-panel" id="outlook-panel"></div>', `<div class="outlook-panel" id="outlook-panel">${outlookMarkup}</div>`);
   }
 
   return html;

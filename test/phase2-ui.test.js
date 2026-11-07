@@ -13,7 +13,7 @@ function pageHarness(storedValue = null) {
     'exposure-cash-equities', 'exposure-btc', 'exposure-eth', 'exposure-xrp',
     'exposure-leveraged', 'exposure-validation', 'personal-result',
     'score-panel', 'subscore-panel', 'subscore-breakdown', 'classification-panel',
-    'classification-body', 'newsletter-panel', 'newsletter-body',
+    'classification-body', 'newsletter-panel', 'newsletter-body', 'outlook-panel', 'outlook-body',
     'score-history', 'history-chart-panel', 'causal-graph', 'causal-graph-panel',
     'signup-form', 'signup-email', 'signup-submit', 'verify-form', 'verify-code',
     'verify-submit', 'signup-status', 'exposure-signup-form', 'exposure-signup-email',
@@ -229,4 +229,40 @@ test('causal graph layering tolerates cycles', () => {
   assert.equal(layers.get('a'), 0);
   assert.ok(layers.get('b') >= 1 && layers.get('c') >= 1);
   assert.ok(renderExports.causalGraphHtml({ nodes, edges: [{ origin: 'b', destination: 'c' }, { origin: 'c', destination: 'b' }] }).includes('<svg'));
+});
+
+const OUTLOOK = {
+  as_of: '2026-11-06', is_current: false, disclaimer: 'Scenario analysis, not financial advice or a prediction.',
+  scenarios: [
+    { kind: 'falling', role: 'macro-market-analyst', if: 'Nov 10 core CPI at or below 0.2%', then: 'treasury_stress eases', backed_by: 'treasury_stress 0.61', depends_on: 'oil steady', wrong_if: 'the 10-year tops 5.0%', odds: 'medium', odds_reason: 'trend intact' },
+    { kind: 'status_quo', if: 'no Fed facility by Dec 10', then: 'stress stays flat', odds: 'high' },
+  ],
+};
+
+test('the page shows the outlook when the event carries one and hides it again when it does not', () => {
+  const { context, elements } = pageHarness();
+  elements['outlook-body'].hidden = true;
+  context.renderEventIntoPage({ final_score: 64, outlook: OUTLOOK });
+  assert.equal(elements['outlook-body'].hidden, false);
+  assert.ok(elements['outlook-panel'].innerHTML.includes('Keeps falling'));
+  assert.ok(elements['outlook-panel'].innerHTML.includes('Latest outlook, Nov 6'));
+  context.renderEventIntoPage({ final_score: 64 });
+  assert.equal(elements['outlook-body'].hidden, true);
+  assert.equal(elements['outlook-panel'].innerHTML, '');
+});
+
+test('a missing outlook node can never break rendering the score', () => {
+  const { context, elements } = pageHarness();
+  delete elements['outlook-panel'];
+  delete elements['outlook-body'];
+  assert.doesNotThrow(() => context.renderEventIntoPage({ final_score: 64, outlook: OUTLOOK }));
+  assert.ok(elements['score-panel'].innerHTML.length > 0);
+});
+
+test('the outlook section sits after the briefing and before the mailing list, hidden by default', () => {
+  const briefing = html.indexOf('<section id="newsletter-body" hidden>');
+  const outlook = html.indexOf('<section id="outlook-body" hidden>');
+  const mailing = html.indexOf('<section id="mailing-list">');
+  assert.ok(briefing > 0 && briefing < outlook && outlook < mailing);
+  assert.ok(html.includes('<div class="outlook-panel" id="outlook-panel"></div>'));
 });

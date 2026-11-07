@@ -214,6 +214,62 @@ per-asset breakdown, the node the aggregate.
 
 ---
 
+## `event.outlook` — "What could happen next" (additive, optional)
+
+The AI council's scenario analysis for the next 30 days. Produced off-box by a separate job, validated by
+code, and re-sanitized by the API before it is served; the API sends the **latest validated outlook within
+30 days**, not necessarily the current event's (most days are non-material and have none of their own).
+**Every field is optional.** The renderer needs only a scenario's `kind`, `if` and `then`, ignores anything it
+does not recognise, and renders nothing when there is no usable scenario. The field is absent until the pipeline
+serves it (`FINANCIAL_STRESS_OUTLOOK_PUBLIC=1`).
+
+```jsonc
+"outlook": {
+  "as_of": "2026-11-06",              // YYYY-MM-DD it was generated; UI says "Latest outlook, Nov 6" when not current
+  "is_current": false,                // true when it belongs to the event being shown
+  "scenarios": [                      // 3–5, at most one per kind
+    {
+      "kind": "falling",              // falling | rebound | tail | status_quo (unknown kinds are skipped)
+      "role": "macro-market-analyst", // macro-market-analyst | factchecker | skeptic; optional, unknown ignored
+      "if": "Nov 10 core CPI at or below 0.2%",       // dated, checkable observable
+      "then": "treasury_stress eases further",        // direction + sub-score; never a numeric score target
+      "backed_by": "treasury_stress 0.61 …",          // facts from the supplied data only
+      "depends_on": "oil steady",
+      "wrong_if": "the 10-year tops 5.0% by Nov 20",
+      "odds": "medium",               // low | medium | high
+      "odds_reason": "trend intact",
+      "resolution": { "metric": "treasury_stress", "op": "<=", "value": 0.58, "by": "2026-11-25" }
+                                      // machine check used by the scorecard grader; the UI does not show it
+    }
+  ],
+  "disagreement": "…",                // optional: one line on a real split between roles
+  "fact_check_note": "…",             // optional
+  "scorecard": { "came_true": 2, "did_not": 1, "pending": 1, "unresolved": 0, "text": "…" },
+                                      // optional track record of past scenarios, graded by code
+  "disclaimer": "Scenario analysis, not financial advice or a prediction. …", // always set by the API
+  "how_made": "…"                     // optional one-line description of how it is produced
+}
+```
+
+Rules: all text is escaped by the front end (never trusted as HTML); the UI always shows the disclaimer (it falls
+back to a built-in copy if the field is missing), the "AI roles, not people" label and the "Powered by E3D Pilot"
+credit; `resolution` is for machines, not for display. Roles are AI lenses run through E3D Pilot, not people.
+
+## `event.calendar_consensus` — researched consensus for scheduled releases (additive, optional)
+
+Stage 1 research of the market consensus and prior reading for upcoming scheduled releases (CPI, payrolls, FOMC,
+Treasury auctions), each with a source. Used by the outlook job to state numeric triggers; the UI does not render it.
+
+```jsonc
+"calendar_consensus": [
+  { "event": "October CPI", "date": "2026-11-10", "consensus": "+0.3% m/m headline, +0.2% core",
+    "prior": "+0.6% headline, +0.3% core", "source_url": "https://…", "as_of": "2026-11-07" }
+]
+```
+
+Items without an https `source_url` from a reputable outlet, or without ISO `date` and `as_of`, are dropped by the
+API; the array is omitted when empty.
+
 ## `event.causal_graph` (MODEL.md §6)
 
 Aligned to `e3d-maps/schemas/flow_graph.py`. **Snapshot pattern:** each published `event`
