@@ -104,8 +104,25 @@
   <h2>Policy classifier &amp; falsifiable calls</h2>
   <p>Alongside the numeric band, each evaluation is classified by observed policymaker behavior &mdash; not the score alone &mdash; into one of five states: Normal, Stress Building, Controlled Stabilization, Systemic Backstop, or Monetary Regime Change. Where present, a call also states one specific, checkable claim about what a real Fed/Treasury response would look like and by when &mdash; the basis for eventually scoring whether published calls were actually followed by what they predicted.</p>
 
+  <h2>The AI council &amp; &ldquo;What Could Happen Next&rdquo;</h2>
+  <p>After a material evaluation, a small council of AI <em>roles</em> looks at that day's data and the score's last 30 days and writes up to four scenarios for the next 30 days: one where stress keeps falling, one where it rebounds, one tail-risk break, and one where nothing changes. The roles are run through <a href="https://pilot.e3d.ai">E3D Pilot</a>, each on a model from a different AI company, so no single model's view is the whole story:</p>
+  <ul>
+    <li><strong>Macro Desk</strong> &mdash; reads the data for what it implies and through which channel.</li>
+    <li><strong>Skeptic</strong> &mdash; challenges the other roles.</li>
+    <li><strong>Fact-Checker</strong> &mdash; checks the figures and says which can't be verified, so unverified claims are dropped.</li>
+  </ul>
+  <p>These are AI roles, not people. Each scenario says <strong>if</strong> something checkable happens by a stated date, <strong>then</strong> which part of the score should move and in which direction, what it is <strong>backed by</strong>, what it <strong>depends on</strong>, what would prove it <strong>wrong</strong>, and rough odds (low, medium or high, never a precise probability). Where the roles genuinely disagree, the disagreement is shown.</p>
+
+  <div class="panel">
+    <strong>Checked by code, not by a person.</strong> Every scenario must pass an automatic check before it is published: it needs a dated, checkable trigger; it must name the part of the score it affects and a direction, and never a target score; the facts it cites must come from the data supplied to the council; and it can't read as investment advice. If fewer than three scenarios pass, nothing is published rather than a weaker version. On the page, the outlook shown is the latest one that passed, with its date.
+  </div>
+
+  <p><strong>A track record, graded automatically.</strong> Each scenario carries a machine-readable test against LiquidityWatch's own published numbers. After its date passes, code &mdash; not a model &mdash; grades it as came true, did not, or could not be checked, and later outlooks report how past scenarios did. Scenarios are graded on how the stress score and its components moved, not on market prices.</p>
+
+  <p><strong>Limits.</strong> Scenarios are a way to think about what could change the picture, not predictions, and the odds are rough. A role may object to the exercise or to a specific scenario; that is part of the point of having one.</p>
+
   <h2>Fully automated</h2>
-  <p>This is an information product, not a trading system or an advisory service, and there is no human-approval step in the publishing path &mdash; a material evaluation publishes automatically the moment the three-stage process completes.</p>
+  <p>This is an information product, not a trading system or an advisory service, and there is no human-approval step in the publishing path &mdash; a material evaluation publishes automatically the moment the three-stage process completes, and the &ldquo;What Could Happen Next&rdquo; scenarios publish the same way, with the automatic check above standing in for a human reviewer.</p>
 
   <h2>Where the data comes from</h2>
   <p>Live web research plus a FRED-sourced macro grounding context (Treasury yields, a broad-dollar proxy, high-yield credit spreads) supplied to the research stage on every cycle.</p>

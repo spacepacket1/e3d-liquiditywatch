@@ -285,6 +285,36 @@
   .classification-block li { margin-bottom: 8px; }
   .confidence-tag { font-size: 11px; color: var(--text-dim); opacity: 0.8; }
 
+  /* "What could happen next": AI-council scenarios (render.js outlookHtml) */
+  .outlook-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .outlook-banner-wrap { margin: -4px -4px 14px; line-height: 0; }
+  .outlook-banner { width: 100%; height: auto; border-radius: 8px; display: block; }
+  .outlook-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+  .outlook-asof { margin-top: 6px; font-size: 13px; color: var(--text-dim); }
+  .outlook-card { border-left: 3px solid var(--gold); padding: 2px 0 2px 14px; margin: 18px 0; }
+  .outlook-card.outlook-falling { border-left-color: var(--green); }
+  .outlook-card.outlook-rebound { border-left-color: #f0954a; }
+  .outlook-card.outlook-tail { border-left-color: var(--red); }
+  .outlook-card.outlook-status_quo { border-left-color: var(--cyan); }
+  .outlook-kind { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .outlook-role { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(77, 214, 232, 0.12); color: var(--cyan); font-size: 11px; letter-spacing: 0.03em; }
+  .outlook-row { margin-top: 4px; color: var(--text); font-size: 15px; }
+  .outlook-row.outlook-minor { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .outlook-row strong { color: var(--cyan); }
+  .outlook-odds { font-weight: 700; text-transform: uppercase; }
+  .outlook-odds-low { color: var(--green); }
+  .outlook-odds-medium { color: var(--gold); }
+  .outlook-odds-high { color: #f0954a; }
+  .outlook-note { margin: 12px 0 0; font-size: 14px; color: var(--text); }
+  .outlook-note strong { color: var(--cyan); }
+  .outlook-disclaimer { margin: 16px 0 0; font-size: 13px; color: var(--text-dim); }
+  .outlook-fine { margin: 6px 0 0; font-size: 12px; color: var(--text-dim); opacity: 0.8; }
+
   .newsletter-panel {
     background: var(--panel);
     border: 1px solid var(--panel-border);
@@ -443,6 +473,7 @@
     .trigger-metrics, .asset-triggers, .subscore-grid { grid-template-columns: 1fr; }
     .subscore-panel, .classification-panel, .causal-graph-panel { padding: 16px 14px 18px; }
     .newsletter-panel { padding: 16px 16px; font-size: 14px; }
+    .outlook-panel { padding: 16px 14px 18px; }
     .signup-panel { padding: 18px 16px; }
     .signup-form { flex-direction: column; }
     .signup-form input, .signup-form button { width: 100%; }
@@ -540,6 +571,12 @@
   <section id="newsletter-body" hidden>
     <h2>Latest Briefing</h2>
     <div class="newsletter-panel" id="newsletter-panel"></div>
+  </section>
+
+  <section id="outlook-body" hidden>
+    <h2>What Could Happen Next</h2>
+    <div class="subhead">Possibilities for the next 30 days from our AI council, each with what would back it and what would prove it wrong.</div>
+    <div class="outlook-panel" id="outlook-panel"></div>
   </section>
 
   <section id="mailing-list">
@@ -726,6 +763,14 @@ function renderEventIntoPage(event) {
   if (event.newsletter_body_html) {
     document.getElementById('newsletter-panel').innerHTML = event.newsletter_body_html;
     document.getElementById('newsletter-body').hidden = false;
+  }
+  // Optional section: look the elements up defensively so a missing node can never break the score render.
+  const outlookPanel = document.getElementById('outlook-panel');
+  const outlookSection = document.getElementById('outlook-body');
+  if (outlookPanel && outlookSection) {
+    const outlookMarkup = outlookHtml(event.outlook);
+    outlookPanel.innerHTML = outlookMarkup;
+    outlookSection.hidden = !outlookMarkup;
   }
 }
 
