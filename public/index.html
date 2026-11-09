@@ -858,9 +858,14 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         submitBtn.disabled = false;
         return;
       }
-      message = digestData.alreadyConfirmed
-        ? `${message} You are already on the daily digest.`
-        : `${message} You will get a separate confirmation for the daily digest.`;
+      // Alerts and the digest are separate lists, each with its own confirmation email, and either may already be
+      // confirmed. Say exactly which emails to expect, so one email never looks like a missing second one.
+      const alertsDone = Boolean(data.alreadyConfirmed);
+      const digestDone = Boolean(digestData.alreadyConfirmed);
+      if (alertsDone && digestDone) message = 'You are already subscribed to the alerts and the daily digest.';
+      else if (alertsDone) message = 'You are already on the alerts. Check your email to confirm the daily digest.';
+      else if (digestDone) message = 'Check your email to confirm the alerts. You are already on the daily digest.';
+      else message = 'Check your email: you will get two confirmations, one for the alerts and one for the daily digest.';
     }
     setStatus(message, 'ok');
     submitBtn.textContent = 'Subscribed';

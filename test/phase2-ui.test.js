@@ -295,13 +295,19 @@ test('the daily digest checkbox adds a second, separate signup on its own list',
     { email: 'both@example.com', list: 'financial_stress_alerts' },
     { email: 'both@example.com', list: 'financial_stress_daily' },
   ]);
-  assert.match(on.elements['signup-status'].textContent, /separate confirmation for the daily digest/);
+  assert.equal(on.elements['signup-status'].textContent, 'Check your email: you will get two confirmations, one for the alerts and one for the daily digest.');
   assert.equal(on.elements['signup-submit'].textContent, 'Subscribed');
   assert.equal(on.elements['signup-email'].disabled, true);
 
   // Already on the digest: say so.
-  const already = await run(true, [ok(), ok({ alreadyConfirmed: true, message: 'Subscribed.' })]);
-  assert.match(already.elements['signup-status'].textContent, /already on the daily digest/);
+  const done = { alreadyConfirmed: true, message: 'Subscribed.' };
+  const digestOnly = await run(true, [ok(), ok(done)]);
+  assert.equal(digestOnly.elements['signup-status'].textContent, 'Check your email to confirm the alerts. You are already on the daily digest.');
+  // Already on the alerts, new to the digest: one email is coming, and the page says so.
+  const alertsOnly = await run(true, [ok(done), ok()]);
+  assert.equal(alertsOnly.elements['signup-status'].textContent, 'You are already on the alerts. Check your email to confirm the daily digest.');
+  const both = await run(true, [ok(done), ok(done)]);
+  assert.equal(both.elements['signup-status'].textContent, 'You are already subscribed to the alerts and the daily digest.');
 
   // Digest request fails: alerts stands, the person is told, and can retry.
   const partial = await run(true, [ok(), { ok: false, json: async () => ({ success: false, message: 'nope' }) }]);
