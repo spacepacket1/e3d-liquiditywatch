@@ -451,6 +451,8 @@
   }
   .signup-form button:hover { opacity: 0.9; }
   .signup-form button:disabled { opacity: 0.5; cursor: default; }
+  .signup-option { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-dim); cursor: pointer; }
+  .signup-option input { accent-color: var(--cyan); width: 16px; height: 16px; }
   .signup-status { margin-top: 10px; font-size: 13px; color: var(--text-dim); }
   .signup-status.error { color: var(--red); }
   .signup-status.ok { color: var(--green); }
@@ -581,11 +583,12 @@
 
   <section id="mailing-list">
     <h2>Join the Mailing List</h2>
-    <div class="subhead">Get notified only when something material changes. No daily noise.</div>
+    <div class="subhead">Get notified when something material changes. Add the daily digest if you also want a note every day.</div>
     <div class="signup-panel">
       <form class="signup-form" id="signup-form">
         <input type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
         <button type="submit" id="signup-submit">Subscribe</button>
+        <label class="signup-option"><input type="checkbox" id="signup-digest"> Also send me the daily digest</label>
       </form>
       <div class="signup-status" id="signup-status"></div>
     </div>
@@ -811,6 +814,8 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const emailInput = document.getElementById('signup-email');
   const submitBtn = document.getElementById('signup-submit');
+  const digestBox = document.getElementById('signup-digest');
+  const wantsDigest = Boolean(digestBox && digestBox.checked);
   const email = emailInput.value.trim();
   if (!email) return;
   submitBtn.disabled = true;
@@ -827,9 +832,37 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
       submitBtn.disabled = false;
       return;
     }
-    setStatus(data.message || 'Check your email to confirm your subscription.', 'ok');
+    let message = data.message || 'Check your email to confirm your subscription.';
+    if (wantsDigest) {
+      // The daily digest is its own list with its own confirmation link, so it is its own request. If it fails the
+      // alerts signup above still stands; the form is re-enabled so the person can try again (alerts then answers
+      // "Subscribed." and only the digest is retried).
+      let digestOk = false;
+      let digestData = null;
+      try {
+        const digestRes = await fetch(`${API_BASE}/api/mailing-list/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, list: 'financial_stress_daily' }),
+        });
+        digestData = await digestRes.json();
+        digestOk = Boolean(digestRes.ok && digestData.success);
+      } catch (err) {
+        digestOk = false;
+      }
+      if (!digestOk) {
+        setStatus(`${message} The daily digest could not be added. Please try again.`, 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+      message = digestData.alreadyConfirmed
+        ? `${message} You are already on the daily digest.`
+        : `${message} You will get a separate confirmation for the daily digest.`;
+    }
+    setStatus(message, 'ok');
     submitBtn.textContent = 'Subscribed';
     emailInput.disabled = true;
+    if (digestBox) digestBox.disabled = true;
   } catch (err) {
     setStatus('Something went wrong. Please try again.', 'error');
     submitBtn.disabled = false;
