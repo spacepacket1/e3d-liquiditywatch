@@ -322,3 +322,14 @@ test('the signup section offers the digest checkbox, unchecked by default, and n
   assert.doesNotMatch(html, /id="signup-digest"[^>]*checked/);
   assert.doesNotMatch(html, /No daily noise/);
 });
+
+test('signup layout: the text-box styling cannot reach the checkbox, the checkbox row is left aligned, and the button sits left of the email box', () => {
+  // The old rule `.signup-form input { flex: 1; min-width: 220px; ... }` also matched the digest checkbox.
+  assert.doesNotMatch(html, /\.signup-form input\s*\{/);
+  assert.match(html, /\.signup-form input\[type="email"\]\s*\{\s*flex: 1;/);
+  assert.match(html, /\.signup-option\s*\{[^}]*justify-content: flex-start[^}]*text-align: left/);
+  assert.match(html, /\.signup-option input\s*\{[^}]*flex: 0 0 auto/);
+  assert.match(html, /#signup-form button\s*\{\s*order: -1;\s*\}/);
+  // On a phone the form stacks, so the email box goes back on top.
+  assert.match(html, /@media[^{]*\{[\s\S]*#signup-form button\s*\{\s*order: 0;/);
+});
