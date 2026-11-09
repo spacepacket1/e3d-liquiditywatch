@@ -15,7 +15,7 @@ function pageHarness(storedValue = null) {
     'score-panel', 'subscore-panel', 'subscore-breakdown', 'classification-panel',
     'classification-body', 'newsletter-panel', 'newsletter-body', 'outlook-panel', 'outlook-body',
     'score-history', 'history-chart-panel', 'causal-graph', 'causal-graph-panel',
-    'signup-form', 'signup-email', 'signup-submit', 'verify-form', 'verify-code',
+    'signup-form', 'signup-email', 'signup-submit', 'signup-digest', 'verify-form', 'verify-code',
     'verify-submit', 'signup-status', 'exposure-signup-form', 'exposure-signup-email',
     'exposure-signup-submit', 'exposure-verify-form', 'exposure-verify-code',
     'exposure-verify-submit', 'exposure-signup-status',
@@ -265,4 +265,60 @@ test('the outlook section sits after the briefing and before the mailing list, h
   const mailing = html.indexOf('<section id="mailing-list">');
   assert.ok(briefing > 0 && briefing < outlook && outlook < mailing);
   assert.ok(html.includes('<div class="outlook-panel" id="outlook-panel"></div>'));
+});
+
+test('the daily digest checkbox adds a second, separate signup on its own list', async () => {
+  const run = async (checked, responses) => {
+    const { context, elements, requests } = pageHarness();
+    elements['signup-email'].value = 'both@example.com';
+    elements['signup-digest'].checked = checked;
+    let call = 0;
+    const before = requests.length;
+    context.fetch = async (url, options) => {
+      requests.push([url, options]);
+      const r = responses[Math.min(call++, responses.length - 1)];
+      if (r === 'throw') throw new Error('network');
+      return r;
+    };
+    await elements['signup-form'].listeners.submit({ preventDefault() {} });
+    return { elements, bodies: requests.slice(before).map(([, o]) => JSON.parse(o.body)) };
+  };
+  const ok = (extra = {}) => ({ ok: true, json: async () => ({ success: true, message: 'Check your email to confirm your subscription.', ...extra }) });
+
+  // Unchecked: exactly the old behaviour, alerts only.
+  const off = await run(false, [ok()]);
+  assert.deepEqual(off.bodies, [{ email: 'both@example.com', list: 'financial_stress_alerts' }]);
+
+  // Checked: alerts first, then the digest list.
+  const on = await run(true, [ok(), ok()]);
+  assert.deepEqual(on.bodies, [
+    { email: 'both@example.com', list: 'financial_stress_alerts' },
+    { email: 'both@example.com', list: 'financial_stress_daily' },
+  ]);
+  assert.match(on.elements['signup-status'].textContent, /separate confirmation for the daily digest/);
+  assert.equal(on.elements['signup-submit'].textContent, 'Subscribed');
+  assert.equal(on.elements['signup-email'].disabled, true);
+
+  // Already on the digest: say so.
+  const already = await run(true, [ok(), ok({ alreadyConfirmed: true, message: 'Subscribed.' })]);
+  assert.match(already.elements['signup-status'].textContent, /already on the daily digest/);
+
+  // Digest request fails: alerts stands, the person is told, and can retry.
+  const partial = await run(true, [ok(), { ok: false, json: async () => ({ success: false, message: 'nope' }) }]);
+  assert.match(partial.elements['signup-status'].textContent, /daily digest could not be added/);
+  assert.equal(partial.elements['signup-status'].className.includes('error'), true);
+  assert.equal(partial.elements['signup-submit'].disabled, false);
+  const thrown = await run(true, [ok(), 'throw']);
+  assert.match(thrown.elements['signup-status'].textContent, /daily digest could not be added/);
+
+  // Alerts request fails: the digest is never attempted.
+  const bad = await run(true, [{ ok: false, json: async () => ({ success: false, message: 'Retry later' }) }, ok()]);
+  assert.equal(bad.bodies.length, 1);
+  assert.equal(bad.elements['signup-status'].textContent, 'Retry later');
+});
+
+test('the signup section offers the digest checkbox, unchecked by default, and no longer promises "no daily noise"', () => {
+  assert.match(html, /<input type="checkbox" id="signup-digest">/);
+  assert.doesNotMatch(html, /id="signup-digest"[^>]*checked/);
+  assert.doesNotMatch(html, /No daily noise/);
 });
