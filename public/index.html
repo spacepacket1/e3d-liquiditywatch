@@ -30,6 +30,33 @@
 <meta name="twitter:title" content="LiquidityWatch — Macro &amp; Crypto Liquidity Intelligence">
 <meta name="twitter:description" content="AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.">
 <meta name="twitter:image" content="https://liquiditywatch.e3d.ai/lw-header.jpg">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://liquiditywatch.e3d.ai/#website",
+      "url": "https://liquiditywatch.e3d.ai/",
+      "name": "LiquidityWatch",
+      "description": "AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.",
+      "publisher": { "@type": "Organization", "name": "E3D", "url": "https://e3d.ai/" }
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://liquiditywatch.e3d.ai/#dataset",
+      "name": "U.S. Financial Stress Score (LiquidityWatch)",
+      "description": "An AI-generated 0-100 score of proximity, severity and probability of policy-forcing U.S. financial-system stress, with sub-scores for Treasury, funding, Fed response, AI economic impulse, energy and global liquidity. Updated each evaluation cycle; history available.",
+      "url": "https://liquiditywatch.e3d.ai/",
+      "isAccessibleForFree": true,
+      "creator": { "@type": "Organization", "name": "E3D", "url": "https://e3d.ai/" },
+      "isPartOf": { "@id": "https://liquiditywatch.e3d.ai/#website" },
+      "measurementTechnique": "Three-stage AI pipeline: research, independent critique, narrative synthesis, over a human-authored causal graph.",
+      "variableMeasured": "U.S. Financial Stress Score (integer 0-100)"
+    }
+  ]
+}
+</script>
 <style>
   :root {
     --bg: #060b16;

@@ -9,6 +9,7 @@ const {
   classificationBlocksHtml,
   historyChartHtml,
   outlookHtml,
+  liveSummaryText,
 } = require('./public/render.js');
 
 const app = express();
@@ -116,6 +117,15 @@ function renderIndexHtml(event, history) {
     html = html
       .replace('<section id="outlook-body" hidden>', '<section id="outlook-body">')
       .replace('<div class="outlook-panel" id="outlook-panel"></div>', `<div class="outlook-panel" id="outlook-panel">${outlookMarkup}</div>`);
+  }
+
+  // Put the live reading at the front of the description / og / twitter
+  // descriptions so search snippets and link previews show today's score.
+  // They stay identical to each other (test/seo.test.js on the template).
+  const summary = liveSummaryText(event);
+  if (summary) {
+    const base = 'AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.';
+    html = html.split(`content="${base}"`).join(`content="${summary} ${base}"`);
   }
 
   return html;
