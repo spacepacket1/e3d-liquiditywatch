@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9DQB5W05Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Z9DQB5W05Y');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embed the Stress Score — LiquidityWatch</title>
+<meta name="description" content="Add a live U.S. Financial Stress Score gauge to your site with two lines of HTML.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<link rel="canonical" href="https://liquiditywatch.e3d.ai/widget.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LiquidityWatch">
+<meta property="og:url" content="https://liquiditywatch.e3d.ai/widget.html">
+<meta property="og:title" content="Embed the Stress Score — LiquidityWatch">
+<meta property="og:description" content="Add a live U.S. Financial Stress Score gauge to your site with two lines of HTML.">
+<meta property="og:image" content="https://liquiditywatch.e3d.ai/lw-header.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="LiquidityWatch: the AI desk, powered by E3D Pilot">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Embed the Stress Score — LiquidityWatch">
+<meta name="twitter:description" content="Add a live U.S. Financial Stress Score gauge to your site with two lines of HTML.">
+<meta name="twitter:image" content="https://liquiditywatch.e3d.ai/lw-header.jpg">
+<style>
+  :root {
+    --bg: #060b16;
+    --panel: #0d1930;
+    --panel-border: #1c2c4a;
+    --gold: #e8b84b;
+    --cyan: #4dd6e8;
+    --text: #e9edf5;
+    --text-dim: #93a2c0;
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  a { color: var(--cyan); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 60px; }
+  .back { font-size: 13px; color: var(--text-dim); text-decoration: none; display: inline-block; margin-bottom: 24px; }
+  .back:hover { color: var(--cyan); }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .subhead { color: var(--text-dim); margin-bottom: 32px; font-size: 14px; }
+  h2 { font-size: 17px; color: var(--gold); margin: 32px 0 10px; }
+  p { color: var(--text); font-size: 15px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; font-size: 15px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .disclaimer {
+    margin-top: 40px;
+    padding: 16px 18px;
+    border: 1px solid rgba(224, 87, 79, 0.35);
+    background: rgba(224, 87, 79, 0.08);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .code { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; padding: 12px 14px; font-size: 13px; overflow-x: auto; white-space: pre; color: var(--text); }
+  iframe { max-width: 100%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to LiquidityWatch</a>
+  <h1>Embed the Stress Score</h1>
+  <div class="subhead">A live gauge of the U.S. Financial Stress Score for your blog, newsletter archive or dashboard. Free to use; it links back to LiquidityWatch.</div>
+
+  <h2>Live preview</h2>
+  <div data-liquiditywatch></div>
+
+  <h2>Copy and paste</h2>
+  <p>Add this wherever you want the gauge to appear:</p>
+  <pre class="code">&lt;div data-liquiditywatch&gt;&lt;/div&gt;
+&lt;script async src="https://liquiditywatch.e3d.ai/widget.js"&gt;&lt;/script&gt;</pre>
+  <p>Prefer no script? Use the frame directly:</p>
+  <pre class="code">&lt;iframe src="https://liquiditywatch.e3d.ai/embed.html" title="LiquidityWatch: U.S. Financial Stress Score" width="320" height="340" style="border:0" loading="lazy"&gt;&lt;/iframe&gt;</pre>
+
+  <h2>Good to know</h2>
+  <ul>
+    <li>The widget loads the current reading each time it is viewed, so it stays up to date without any work on your side.</li>
+    <li>It runs inside its own frame, so it can't change your page's styles or read your page.</li>
+    <li>The score is produced by an AI process and is informational only. See <a href="/about.html">how it works</a>.</li>
+  </ul>
+
+  <div class="disclaimer">
+    <strong>Not investment advice.</strong> This score and its narrative are produced by an AI research and synthesis process and are provided for informational purposes only. They are not a recommendation to buy, sell, or hold any asset.
+  </div>
+</div>
+<script async src="/widget.js"></script>
+</body>
+</html>

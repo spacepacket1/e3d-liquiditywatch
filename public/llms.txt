@@ -6,6 +6,9 @@
 - [Live dashboard](https://liquiditywatch.e3d.ai/): the current score, regime, sub-scores, briefing and score history, rendered as plain HTML (no JavaScript needed).
 - [About and methodology](https://liquiditywatch.e3d.ai/about.html): what the score means, the six regime bands and how the model works.
 
+- [Track record](https://liquiditywatch.e3d.ai/track-record.html): every stored reading of the score over time.
+- [Embed widget](https://liquiditywatch.e3d.ai/widget.html): add the live gauge to another site.
+
 ## Score bands
 - 0-15 Accommodative
 - 15-35 Mild Watchfulness

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9DQB5W05Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Z9DQB5W05Y');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Track record — LiquidityWatch</title>
+<meta name="description" content="Every stored reading of the LiquidityWatch U.S. Financial Stress Score, lined up against the events that mattered.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<link rel="canonical" href="https://liquiditywatch.e3d.ai/track-record.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LiquidityWatch">
+<meta property="og:url" content="https://liquiditywatch.e3d.ai/track-record.html">
+<meta property="og:title" content="Track record — LiquidityWatch">
+<meta property="og:description" content="Every stored reading of the LiquidityWatch U.S. Financial Stress Score, lined up against the events that mattered.">
+<meta property="og:image" content="https://liquiditywatch.e3d.ai/lw-header.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="LiquidityWatch: the AI desk, powered by E3D Pilot">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Track record — LiquidityWatch">
+<meta name="twitter:description" content="Every stored reading of the LiquidityWatch U.S. Financial Stress Score, lined up against the events that mattered.">
+<meta name="twitter:image" content="https://liquiditywatch.e3d.ai/lw-header.jpg">
+<style>
+  :root {
+    --bg: #060b16;
+    --panel: #0d1930;
+    --panel-border: #1c2c4a;
+    --gold: #e8b84b;
+    --cyan: #4dd6e8;
+    --text: #e9edf5;
+    --text-dim: #93a2c0;
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  a { color: var(--cyan); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 60px; }
+  .back { font-size: 13px; color: var(--text-dim); text-decoration: none; display: inline-block; margin-bottom: 24px; }
+  .back:hover { color: var(--cyan); }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .subhead { color: var(--text-dim); margin-bottom: 32px; font-size: 14px; }
+  h2 { font-size: 17px; color: var(--gold); margin: 32px 0 10px; }
+  p { color: var(--text); font-size: 15px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; font-size: 15px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .disclaimer {
+    margin-top: 40px;
+    padding: 16px 18px;
+    border: 1px solid rgba(224, 87, 79, 0.35);
+    background: rgba(224, 87, 79, 0.08);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .wrap { max-width: 800px; }
+  .history-chart-panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 18px 20px 12px; }
+  .history-chart-svg { width: 100%; height: auto; display: block; }
+  .gauge-tick { font-size: 11px; fill: var(--text-dim); }
+  .tr-range { margin-top: 10px; font-size: 13px; color: var(--text-dim); }
+  .tr-na { color: var(--text-dim); font-size: 13px; }
+  .tr-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tr-table th { text-align: left; color: var(--text-dim); font-weight: 600; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--panel-border); }
+  .tr-table td { padding: 10px 8px; border-bottom: 1px solid var(--panel-border); vertical-align: top; }
+  .tr-date { white-space: nowrap; color: var(--text-dim); }
+  .tr-score { font-weight: 800; font-size: 16px; }
+  .tr-band { color: var(--text-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to LiquidityWatch</a>
+  <h1>Track record</h1>
+  <div class="subhead">Every stored reading of the U.S. Financial Stress Score, and what the score said on the days that mattered.</div>
+
+  <p>This page shows the score as it was recorded at the time, so you can judge it against what actually happened. The events below are chosen by hand and listed whether or not the score looked smart on that day.</p>
+
+  <h2>Score over time</h2>
+  <div class="history-chart-panel" id="tr-chart"><div class="tr-na">Loading&hellip;</div></div>
+  <div class="tr-range" id="tr-range"></div>
+
+  <div id="tr-events-section" hidden>
+    <h2>The score on the day</h2>
+    <div id="tr-events"></div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Not investment advice.</strong> The score is an AI-produced, informational measure and past readings do not predict future ones. See <a href="/about.html">how it works</a>.
+  </div>
+</div>
+<script src="/render.js"></script>
+<script>
+const API_BASE = 'https://e3d.ai';
+
+async function getJson(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(String(res.status));
+  return res.json();
+}
+
+(async function loadTrackRecord() {
+  let history = null;
+  try {
+    const data = await getJson(`${API_BASE}/api/financial-stress-monitor/history?limit=365`);
+    history = Array.isArray(data) ? data : null;
+  } catch (err) { /* chart stays on its message */ }
+  const chart = historyChartHtml(history);
+  document.getElementById('tr-chart').innerHTML = chart || '<div class="tr-na">Score history is unavailable right now.</div>';
+  document.getElementById('tr-range').textContent = historyRangeSummary(history);
+
+  // Hand-maintained list of real events; optional and independent of the chart.
+  try {
+    const data = await getJson('/track-record-events.json');
+    const html = trackRecordEventsHtml(trackRecordRows(data && data.events, history));
+    if (html) {
+      document.getElementById('tr-events').innerHTML = html;
+      document.getElementById('tr-events-section').hidden = false;
+    }
+  } catch (err) { /* section stays hidden */ }
+})();
+</script>
+</body>
+</html>
