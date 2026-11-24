@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LiquidityWatch score widget</title>
+<style>
+  :root { --bg: #0d1930; --border: #1c2c4a; --gold: #e8b84b; --cyan: #4dd6e8; --text: #e9edf5; --text-dim: #93a2c0; --green: #34c77b; --red: #e0574f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--text); line-height: 1.4; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px 12px; text-align: center; }
+  .brand { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+  .sub { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .gauge-wrap { width: 100%; max-width: 260px; margin: 0 auto; }
+  .gauge-svg { width: 100%; height: auto; display: block; }
+  .gauge-tick { font-size: 11px; fill: var(--text-dim); }
+  .gauge-score-wrap { margin-top: -12px; }
+  .gauge-score-number { font-size: 56px; font-weight: 800; line-height: 1; }
+  .gauge-score-suffix { font-size: 18px; font-weight: 600; color: var(--text-dim); margin-left: 2px; }
+  .gauge-band-label { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .gauge-delta { font-size: 12px; margin-top: 2px; font-weight: 600; }
+  .empty { padding: 28px 8px; color: var(--text-dim); font-size: 14px; }
+  .foot { margin-top: 8px; font-size: 12px; }
+  .foot a { color: var(--cyan); text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">LiquidityWatch</div>
+  <div class="sub">U.S. Financial Stress Score</div>
+  <div id="widget-body"><div class="empty">Loading&hellip;</div></div>
+  <div class="foot"><a href="https://liquiditywatch.e3d.ai/" target="_blank" rel="noopener">Full briefing at liquiditywatch.e3d.ai &rarr;</a></div>
+</div>
+<script src="/render.js"></script>
+<script>
+const API_BASE = 'https://e3d.ai';
+
+// Compact gauge from the same helpers as the main page. Every field is optional:
+// with no usable final_score the card shows a plain unavailable message.
+function widgetHtml(event) {
+  const score = event && typeof event.final_score === 'number' && Number.isFinite(event.final_score)
+    ? Math.round(event.final_score) : null;
+  if (score == null) return '<div class="empty">Score unavailable right now.</div>';
+  const color = gaugeBandColor(score);
+  return `
+    <div class="gauge-wrap">${buildGaugeSvg(score)}</div>
+    <div class="gauge-score-wrap">
+      <span class="gauge-score-number" style="color:${color}">${score}</span><span class="gauge-score-suffix">/100</span>
+      <div class="gauge-band-label" style="color:${color}">${escapeHtml(gaugeBand(score).label)}</div>
+      ${gaugeDeltaHtml(event.final_score, event.final_score_before)}
+    </div>`;
+}
+
+async function loadWidget() {
+  const body = document.getElementById('widget-body');
+  try {
+    const res = await fetch(`${API_BASE}/api/financial-stress-monitor`, { cache: 'no-store' });
+    const data = await res.json();
+    body.innerHTML = widgetHtml(data && data.event);
+  } catch (err) {
+    body.innerHTML = '<div class="empty">Score unavailable right now.</div>';
+  }
+}
+loadWidget();
+</script>
+</body>
+</html>

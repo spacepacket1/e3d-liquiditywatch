@@ -885,6 +885,56 @@ function buildScoreCardSvg(event) {
 </svg>`;
 }
 
+// Track-record page helpers (public/track-record.html). The page lines up a
+// hand-maintained list of real-world events (public/track-record-events.json)
+// against the published score history. Nothing here is model output: it looks
+// up the stored reading in force on each event date and reports the window's
+// observed range. Every input is optional/untrusted - unusable entries drop out.
+function scoredHistory(history) {
+  return (Array.isArray(history) ? history : [])
+    .filter((e) => e && typeof e === 'object' && typeof e.final_score === 'number' && Number.isFinite(e.final_score) && !Number.isNaN(new Date(e.created_at).getTime()))
+    .map((e) => ({ score: Math.round(e.final_score), t: new Date(e.created_at).getTime(), created_at: e.created_at }))
+    .sort((a, b) => a.t - b.t);
+}
+
+function trackRecordRows(events, history) {
+  const pts = scoredHistory(history);
+  return (Array.isArray(events) ? events : [])
+    .filter((ev) => ev && typeof ev === 'object' && typeof ev.title === 'string' && ev.title.trim()
+      && typeof ev.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(ev.date) && !Number.isNaN(new Date(`${ev.date}T00:00:00Z`).getTime()))
+    .map((ev) => {
+      const endOfDay = new Date(`${ev.date}T23:59:59Z`).getTime();
+      let reading = null;
+      for (const p of pts) { if (p.t <= endOfDay) reading = p; else break; }
+      const url = typeof ev.url === 'string' && /^https?:\/\//i.test(ev.url) ? ev.url : '';
+      return { date: ev.date, title: ev.title.trim(), url, score: reading ? reading.score : null };
+    })
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
+function trackRecordEventsHtml(rows) {
+  if (!Array.isArray(rows) || !rows.length) return '';
+  const body = rows.map((r) => {
+    const title = r.url
+      ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a>`
+      : escapeHtml(r.title);
+    const score = r.score == null
+      ? '<span class="tr-na">no reading yet</span>'
+      : `<span class="tr-score" style="color:${gaugeBandColor(r.score)}">${r.score}</span> <span class="tr-band">${escapeHtml(gaugeBand(r.score).label)}</span>`;
+    return `<tr><td class="tr-date">${escapeHtml(formatHistoryDateLabel(`${r.date}T12:00:00Z`))}, ${escapeHtml(r.date.slice(0, 4))}</td><td>${title}</td><td>${score}</td></tr>`;
+  }).join('');
+  return `<table class="tr-table"><thead><tr><th>Date</th><th>Event</th><th>Score at the time</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function historyRangeSummary(history) {
+  const pts = scoredHistory(history);
+  if (!pts.length) return '';
+  const lo = pts.reduce((m, p) => (p.score < m.score ? p : m));
+  const hi = pts.reduce((m, p) => (p.score > m.score ? p : m));
+  const day = (p) => `${formatHistoryDateLabel(p.created_at)}, ${new Date(p.t).getUTCFullYear()}`;
+  return `${pts.length} readings since ${day(pts[0])}. High ${hi.score} (${day(hi)}), low ${lo.score} (${day(lo)}).`;
+}
+
 // One-line, plain-text summary of the current reading for <meta> descriptions
 // (search snippets, link previews). Returns '' unless final_score is a usable
 // number, so callers fall back to the static description. Band label comes
@@ -943,6 +993,9 @@ const RENDER_EXPORTS = {
   buildScorePanelHtml,
   liveSummaryText,
   buildScoreCardSvg,
+  trackRecordRows,
+  trackRecordEventsHtml,
+  historyRangeSummary,
   EMPTY_STATE_HTML,
   ERROR_STATE_HTML,
 };
