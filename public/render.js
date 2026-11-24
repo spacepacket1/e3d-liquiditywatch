@@ -821,6 +821,70 @@ function buildScorePanelHtml(event) {
   `;
 }
 
+// 1200x630 social share card (served as a PNG by server.js at /score-card.png,
+// converted from this SVG). Standalone: all styling is inline attributes and the
+// font-family is one the server bundles (fonts/DejaVuSans*.ttf). Returns '' unless
+// final_score is a usable number, so the caller falls back to the static image.
+// Reuses the gauge geometry/bands above; nothing is computed beyond display.
+function buildScoreCardSvg(event) {
+  const raw = event && event.final_score;
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return '';
+  const score = Math.round(Math.min(100, Math.max(0, raw)));
+  const band = gaugeBand(score);
+  const font = 'DejaVu Sans, sans-serif';
+
+  const cx = 160;
+  const cy = 155;
+  const r = 118;
+  const strokeW = 22;
+  const arcs = GAUGE_BANDS.map((b) => `<path d="${gaugeArcPath(cx, cy, r, b.min, b.max)}" stroke="${b.color}" stroke-width="${strokeW}" fill="none"/>`).join('');
+  const tip = gaugePolarPoint(cx, cy, r - strokeW / 2 - 6, gaugeAngleForValue(score));
+  const needle = `<line x1="${cx}" y1="${cy}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="#e9edf5" stroke-width="4" stroke-linecap="round"/>`
+    + `<circle cx="${cx}" cy="${cy}" r="9" fill="#e9edf5"/><circle cx="${cx}" cy="${cy}" r="6" fill="${band.color}"/>`;
+
+  // Wrap the band label onto two lines at the space nearest the middle when long.
+  const words = band.label.split(' ');
+  let lines = [band.label];
+  if (band.label.length > 14 && words.length > 1) {
+    let best = 1;
+    let bestDiff = Infinity;
+    for (let i = 1; i < words.length; i += 1) {
+      const diff = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    lines = [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+  }
+  const labelSvg = lines.map((l, i) => `<text x="860" y="${382 + i * 40}" font-family="${font}" font-size="34" font-weight="bold" fill="${band.color}">${escapeHtml(l)}</text>`).join('');
+  const nextY = 382 + lines.length * 40 + 8;
+
+  let delta = '';
+  const before = event.final_score_before;
+  if (typeof before === 'number' && Number.isFinite(before)) {
+    const diff = score - Math.round(before);
+    const text = diff === 0 ? 'No change vs last reading' : `${diff > 0 ? '\u25B2 +' : '\u25BC '}${diff} vs last reading`;
+    const color = diff === 0 ? '#8c9ab5' : (diff > 0 ? '#e0574f' : '#2ecc71');
+    delta = `<text x="860" y="${nextY + 24}" font-family="${font}" font-size="24" fill="${color}">${escapeHtml(text)}</text>`;
+  }
+  const date = formatHistoryDateLabel(event.timestamp || event.created_at);
+  let year = '';
+  const d = new Date(event.timestamp || event.created_at);
+  if (!Number.isNaN(d.getTime())) year = `, ${d.getUTCFullYear()}`;
+  const dateSvg = date ? `<text x="860" y="${nextY + 64}" font-family="${font}" font-size="22" fill="#8c9ab5">${escapeHtml(date + year)}</text>` : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#060b16"/>
+  <rect x="24" y="24" width="1152" height="582" rx="20" fill="#0d1930" stroke="#1c2c4a" stroke-width="2"/>
+  <text x="70" y="96" font-family="${font}" font-size="40" font-weight="bold" fill="#e8b84b" letter-spacing="3">LIQUIDITYWATCH</text>
+  <text x="70" y="136" font-family="${font}" font-size="26" fill="#8c9ab5">U.S. Financial Stress Score</text>
+  <g transform="translate(60 150) scale(2.4)">${arcs}${needle}</g>
+  <text x="860" y="300" font-family="${font}" font-size="150" font-weight="bold" fill="#e9edf5">${score}</text>
+  <text x="860" y="340" font-family="${font}" font-size="26" fill="#8c9ab5">out of 100</text>
+  ${labelSvg}${delta}${dateSvg}
+  <text x="70" y="580" font-family="${font}" font-size="24" fill="#4dd6e8">liquiditywatch.e3d.ai</text>
+  <text x="1130" y="580" text-anchor="end" font-family="${font}" font-size="20" fill="#8c9ab5">Informational only. Not investment advice.</text>
+</svg>`;
+}
+
 // One-line, plain-text summary of the current reading for <meta> descriptions
 // (search snippets, link previews). Returns '' unless final_score is a usable
 // number, so callers fall back to the static description. Band label comes
@@ -878,6 +942,7 @@ const RENDER_EXPORTS = {
   outlookHtml,
   buildScorePanelHtml,
   liveSummaryText,
+  buildScoreCardSvg,
   EMPTY_STATE_HTML,
   ERROR_STATE_HTML,
 };
