@@ -71,3 +71,31 @@ test('liveSummaryText: band label from the table, empty when the score is unusab
     assert.equal(liveSummaryText(bad), '');
   }
 });
+
+test('buildScoreCardSvg: score, band and date appear; unusable score returns empty', () => {
+  const { buildScoreCardSvg } = require('../public/render.js');
+  const svg = buildScoreCardSvg({ final_score: 71, final_score_before: 68, timestamp: '2026-11-23T09:18:30.293Z' });
+  assert.match(svg, /^<svg [^>]*width="1200" height="630"/);
+  assert.match(svg, />71<\/text>/);
+  assert.ok(svg.includes('Restrictive'));
+  assert.ok(svg.includes('+3 vs last reading'));
+  assert.ok(svg.includes('Nov 23, 2026'));
+  // optional fields absent: still renders, just without delta/date
+  const bare = buildScoreCardSvg({ final_score: 8 });
+  assert.ok(bare.includes('Accommodative') && !bare.includes('vs last reading'));
+  for (const bad of [null, undefined, {}, { final_score: null }, { final_score: 'x' }, { final_score: Infinity }]) {
+    assert.equal(buildScoreCardSvg(bad), '');
+  }
+});
+
+test('score card renders to a 1200x630 PNG with the bundled fonts', () => {
+  const { Resvg } = require('@resvg/resvg-js');
+  const { buildScoreCardSvg } = require('../public/render.js');
+  const fonts = ['DejaVuSans.ttf', 'DejaVuSans-Bold.ttf'].map((f) => path.join(__dirname, '..', 'fonts', f));
+  for (const f of fonts) assert.ok(fs.existsSync(f), f);
+  assert.ok(fs.existsSync(path.join(__dirname, '..', 'fonts', 'DEJAVU-LICENSE.txt')));
+  const img = new Resvg(buildScoreCardSvg({ final_score: 82 }), { font: { loadSystemFonts: false, fontFiles: fonts, defaultFontFamily: 'DejaVu Sans' } }).render();
+  assert.equal(img.width, 1200);
+  assert.equal(img.height, 630);
+  assert.deepEqual([...img.asPng().subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
+});

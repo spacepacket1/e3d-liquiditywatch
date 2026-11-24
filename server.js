@@ -10,6 +10,7 @@ const {
   historyChartHtml,
   outlookHtml,
   liveSummaryText,
+  buildScoreCardSvg,
 } = require('./public/render.js');
 
 const app = express();
@@ -126,10 +127,67 @@ function renderIndexHtml(event, history) {
   if (summary) {
     const base = 'AI-monitored U.S. Treasury, Fed liquidity, and crypto-market signals. Quiet until something meaningful changes.';
     html = html.split(`content="${base}"`).join(`content="${summary} ${base}"`);
+    // Point the share image at the live card; the query string changes with the
+    // reading so platforms that cache previews refetch when the score moves.
+    const v = encodeURIComponent(cardKey(event));
+    const cardUrl = `https://liquiditywatch.e3d.ai/score-card.png?v=${v}`;
+    html = html
+      .split('content="https://liquiditywatch.e3d.ai/lw-header.jpg"').join(`content="${cardUrl}"`)
+      .replace('<meta property="og:image:height" content="675">', '<meta property="og:image:height" content="630">')
+      .replace('content="LiquidityWatch: the AI desk, powered by E3D Pilot"', `content="${summary.replace(/"/g, '&quot;')}"`);
   }
 
   return html;
 }
+
+// Live share card: the dashboard gauge + current score as a 1200x630 PNG for
+// og:image / twitter:image (social platforms will not render SVG). Built from
+// the same cached event as the page. @resvg/resvg-js is required lazily so a
+// missing/broken native binary degrades to the static header image instead of
+// stopping the server. PNG is memoised per (score, before, timestamp).
+const STATIC_SHARE_IMAGE = '/lw-header.jpg';
+const FONT_DIR = path.join(__dirname, 'fonts');
+let cardCache = { key: null, png: null };
+
+function cardKey(event) {
+  const e = event || {};
+  return [e.final_score, e.final_score_before, e.timestamp || e.created_at]
+    .filter((x) => x !== undefined && x !== null)
+    .map((x) => String(x).replace(/[^\w.:-]/g, ''))
+    .join('-');
+}
+
+function renderScoreCardPng(event) {
+  const svg = buildScoreCardSvg(event);
+  if (!svg) return null;
+  const key = cardKey(event);
+  if (cardCache.key === key && cardCache.png) return cardCache.png;
+  const { Resvg } = require('@resvg/resvg-js');
+  const png = new Resvg(svg, {
+    font: {
+      loadSystemFonts: false,
+      fontFiles: [path.join(FONT_DIR, 'DejaVuSans.ttf'), path.join(FONT_DIR, 'DejaVuSans-Bold.ttf')],
+      defaultFontFamily: 'DejaVu Sans',
+    },
+  }).render().asPng();
+  cardCache = { key, png };
+  return png;
+}
+
+app.get('/score-card.png', async (req, res) => {
+  try {
+    const event = await getEvent();
+    const png = renderScoreCardPng(event);
+    if (png) {
+      res.set('Cache-Control', 'public, max-age=300');
+      return res.type('png').send(png);
+    }
+  } catch (err) {
+    console.error('[score-card] render failed, serving static image:', err.message);
+  }
+  res.set('Cache-Control', 'no-store');
+  res.redirect(302, STATIC_SHARE_IMAGE);
+});
 
 app.get(['/', '/index.html'], async (req, res) => {
   res.set('Cache-Control', 'no-store');
