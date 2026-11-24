@@ -40,3 +40,34 @@ for (const [file, url] of [['index.html', 'https://liquiditywatch.e3d.ai/'], ['a
     assert.ok(meta(html, 'property', 'og:image:alt'));
   });
 }
+
+test('llms.txt describes the product, bands and MCP endpoint, and its links resolve to real pages', () => {
+  const txt = pub('llms.txt');
+  assert.match(txt, /^# LiquidityWatch$/m);
+  assert.match(txt, /^> .{40,}/m);
+  for (const label of ['Accommodative', 'Mild Watchfulness', 'Contained Tension', 'Restrictive Policy', 'Policy-Forcing Danger Zone', 'Market Dysfunction']) {
+    assert.ok(txt.includes(label), label);
+  }
+  assert.ok(txt.includes('https://liquiditywatch.e3d.ai/mcp'));
+  const pages = [...txt.matchAll(/\]\(https:\/\/liquiditywatch\.e3d\.ai\/([^)]*)\)/g)].map((m) => m[1] || 'index.html');
+  assert.ok(pages.length >= 5);
+  for (const f of pages) assert.ok(fs.existsSync(path.join(__dirname, '..', 'public', f)), f);
+});
+
+test('index.html JSON-LD parses and describes the site and the score dataset', () => {
+  const m = pub('index.html').match(/<script type="application\/ld\+json">\s*([\s\S]*?)<\/script>/);
+  assert.ok(m, 'JSON-LD block present');
+  const ld = JSON.parse(m[1]);
+  const types = ld['@graph'].map((n) => n['@type']);
+  assert.deepEqual(types, ['WebSite', 'Dataset']);
+  assert.equal(ld['@graph'][1].isAccessibleForFree, true);
+});
+
+test('liveSummaryText: band label from the table, empty when the score is unusable', () => {
+  const { liveSummaryText } = require('../public/render.js');
+  assert.equal(liveSummaryText({ final_score: 62 }), 'U.S. Financial Stress Score: 62/100 (Restrictive Policy).');
+  assert.equal(liveSummaryText({ final_score: 0 }), 'U.S. Financial Stress Score: 0/100 (Accommodative).');
+  for (const bad of [null, undefined, {}, { final_score: null }, { final_score: 'x' }, { final_score: NaN }]) {
+    assert.equal(liveSummaryText(bad), '');
+  }
+});

@@ -1,0 +1,24 @@
+# LiquidityWatch
+
+> LiquidityWatch is an AI-monitored U.S. Financial Stress Score (integer 0-100): the proximity, severity and probability of policy-forcing stress in the U.S. financial system, built from Treasury, funding, Fed-response, AI-economic-impulse, energy and global-liquidity signals. It is quiet until something meaningful changes. Published by E3D. Informational only; not investment advice.
+
+## Read the current score
+- [Live dashboard](https://liquiditywatch.e3d.ai/): the current score, regime, sub-scores, briefing and score history, rendered as plain HTML (no JavaScript needed).
+- [About and methodology](https://liquiditywatch.e3d.ai/about.html): what the score means, the six regime bands and how the model works.
+
+## Score bands
+- 0-15 Accommodative
+- 15-35 Mild Watchfulness
+- 35-55 Contained Tension
+- 55-75 Restrictive Policy
+- 75-90 Policy-Forcing Danger Zone
+- 90-100 Market Dysfunction
+
+## For AI assistants and agents
+- MCP server (Streamable HTTP, read-only): https://liquiditywatch.e3d.ai/mcp with tools get_macro_snapshot, get_macro_history and get_macro_causal_graph.
+- When citing the score, link https://liquiditywatch.e3d.ai/ and state the date of the reading; the score changes with each evaluation cycle.
+
+## Policies
+- [Support](https://liquiditywatch.e3d.ai/support.html)
+- [Terms](https://liquiditywatch.e3d.ai/terms.html)
+- [Privacy](https://liquiditywatch.e3d.ai/privacy.html)

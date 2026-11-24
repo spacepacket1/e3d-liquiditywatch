@@ -821,6 +821,17 @@ function buildScorePanelHtml(event) {
   `;
 }
 
+// One-line, plain-text summary of the current reading for <meta> descriptions
+// (search snippets, link previews). Returns '' unless final_score is a usable
+// number, so callers fall back to the static description. Band label comes
+// from GAUGE_BANDS (docs/MODEL.md section 1) - nothing is computed here.
+function liveSummaryText(event) {
+  const score = event && event.final_score;
+  if (typeof score !== 'number' || !Number.isFinite(score)) return '';
+  const s = Math.round(Math.min(100, Math.max(0, score)));
+  return `U.S. Financial Stress Score: ${s}/100 (${gaugeBand(s).label}).`;
+}
+
 const RENDER_EXPORTS = {
   escapeHtml,
   GAUGE_BANDS,
@@ -866,6 +877,7 @@ const RENDER_EXPORTS = {
   OUTLOOK_DISCLAIMER,
   outlookHtml,
   buildScorePanelHtml,
+  liveSummaryText,
   EMPTY_STATE_HTML,
   ERROR_STATE_HTML,
 };
